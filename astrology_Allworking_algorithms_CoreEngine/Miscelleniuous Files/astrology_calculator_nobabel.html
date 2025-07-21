@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Astrology Calculator - No Babel</title>
+</head>
+<body>
+  <h1>Astrology Calculator Output</h1>
+  <pre id="output" style="white-space: pre-wrap; font-family: monospace; background: #f0f0f0; padding: 1rem;"></pre>
+
+  <script>
+(function () {
+  function AstrologyCalculator() {
+    this.detectDhanaYoga = function(planetPositions, houseCusps) {
+      // Placeholder logic
+      return [{
+        name: "Example Dhana Yoga",
+        strength: 88,
+        description: "SUN and MOON form a Trine",
+        effects: "Wealth and prosperity"
+      }];
+    };
+
+    this.processChart = function(swissEphemerisData) {
+      const dhanaYogas = this.detectDhanaYoga(swissEphemerisData.planetPositions, swissEphemerisData.houseCusps);
+      return { dhanaYogas };
+    };
+  }
+
+  const calculator = new AstrologyCalculator();
+  const swissEphemerisData = {
+    planetPositions: {
+      SUN: { longitude: 45.5 },
+      MOON: { longitude: 120.3 },
+      VENUS: { longitude: 180 },
+      JUPITER: { longitude: 150 },
+      MERCURY: { longitude: 90 },
+      MARS: { longitude: 75 },
+      SATURN: { longitude: 210 }
+    },
+    houseCusps: [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 0],
+    birthDetails: {
+      birthDate: '1990-01-01',
+      latitude: 28.7041,
+      longitude: 77.1025
+    }
+  };
+
+  const result = calculator.processChart(swissEphemerisData);
+  document.getElementById("output").textContent = JSON.stringify(result, null, 2);
+})();
+  </script>
+</body>
+</html>

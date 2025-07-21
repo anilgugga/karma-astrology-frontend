@@ -1,0 +1,51 @@
+
+I am continuing work on Module 5: React + Tailwind Frontend Integration for my Karma Astrology App.
+
+🔧 Current Status
+Frontend now built with React + Tailwind using cosmic blue & gold theme
+
+Marriage prediction, Compatibility, Transit-Dasha components implemented
+
+Firebase Firestore is enabled and configured (firebaseConfig.js)
+
+Reports are saved in Firestore under:
+
+users/{user_id}/marriageReports/{...}
+
+users/{user_id}/compatibilityReports/{...}
+
+/profile page shows saved reports
+
+✅ What I Need Next
+Build TransitDasha.jsx fully
+
+Form takes full birth info
+
+Calls /api/transit and /api/dasha
+
+Displays both results side-by-side
+
+Saves report to Firestore under:
+users/{user_id}/transitDashaReports/{timestamp}
+
+Update Profile.jsx to show saved Transit+Dasha reports
+
+Prepare final deployable GitHub project
+
+Clean structure, remove unused files
+
+Add .env for Firebase config
+
+Prepare vercel.json to proxy /api/* routes
+
+Help me deploy to Vercel
+
+Push to GitHub
+
+Connect to Vercel
+
+Proxy backend API routes properly
+
+✅ I am a non-technical user, so please give full working files, clear folder paths, and beginner-friendly step-by-step instructions.
+
+

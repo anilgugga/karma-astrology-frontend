@@ -1,0 +1,24 @@
+/* src/components/ResultTabs.css */
+.result-tabs {
+  padding: 20px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tab-buttons button {
+  padding: 8px 14px;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tab-buttons button.active {
+  background: #007bff;
+  color: white;
+}

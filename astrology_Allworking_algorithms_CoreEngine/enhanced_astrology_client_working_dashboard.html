@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Astrology Client Dashboard</title>
+    <style>
+        body { background: #2B3990; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header h1 { color: #F5A623; margin: 0; }
+        .header p { margin: 10px 0; opacity: 0.9; }
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .add-btn { background: #F5A623; color: #2B3990; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; cursor: pointer; transition: all 0.3s; }
+        .add-btn:hover { background: #E6951A; transform: translateY(-1px); }
+        .search-input { background: #454FBF; border: 2px solid #F5A623; border-radius: 8px; padding: 8px 12px; color: #fff; width: 200px; }
+        .search-input::placeholder { color: #ccc; }
+        .filter-select { background: #454FBF; border: 2px solid #F5A623; border-radius: 8px; padding: 8px 12px; color: #fff; }
+        .clients-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+        .client-card { background: #454FBF; border: 2px solid #F5A623; border-radius: 12px; padding: 18px; transition: all 0.3s; cursor: pointer; }
+        .client-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(245, 166, 35, 0.3); }
+        .client-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .client-name { font-size: 1.2em; font-weight: bold; }
+        .status-badge { font-size: 12px; padding: 2px 10px; border-radius: 10px; border: 1px solid #22c55e; color: #22c55e; }
+        .status-badge.inactive { border-color: #ef4444; color: #ef4444; }
+        .client-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .client-actions { display: flex; gap: 10px; }
+        .action-btn { background: transparent; border: 1px solid #F5A623; color: #F5A623; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: all 0.3s; }
+        .action-btn:hover { background: #F5A623; color: #2B3990; }
+        .action-btn.delete { border-color: #ef4444; color: #ef4444; }
+        .action-btn.delete:hover { background: #ef4444; color: #fff; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; }
+        .modal-content { background: #2B3990; border: 2px solid #F5A623; border-radius: 12px; padding: 30px; max-width: 500px; margin: 50px auto; position: relative; }
+        .modal-header { text-align: center; margin-bottom: 25px; }
+        .modal-header h2 { color: #F5A623; margin: 0; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #F5A623; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid #454FBF; border-radius: 8px; background: #454FBF; color: #fff; font-size: 1em; box-sizing: border-box; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #F5A623; }
+        .form-actions { display: flex; gap: 10px; justify-content: center; margin-top: 25px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn-primary { background: #F5A623; color: #2B3990; }
+        .btn-primary:hover { background: #E6951A; }
+        .btn-secondary { background: transparent; color: #F5A623; border: 2px solid #F5A623; }
+        .btn-secondary:hover { background: #F5A623; color: #2B3990; }
+        .close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #F5A623; }
+        .close:hover { color: #E6951A; }
+        #toast { display:none; position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#2B3990; color:#F5A623; padding:16px 32px; border-radius:24px; font-weight:bold; box-shadow:0 8px 32px rgba(43,57,144,0.2); z-index:9999; font-size:1.1rem; border: 2px solid #F5A623; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #454FBF; border: 2px solid #F5A623; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #F5A623; }
+        .stat-label { opacity: 0.8; margin-top: 5px; }
+        .detailed-view { display: none; }
+        .detailed-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .info-section { background: #3A4A9F; padding: 15px; border-radius: 8px; }
+        .info-section h4 { color: #F5A623; margin-top: 0; }
+        .consultation-history { margin-top: 20px; }
+        .consultation-item { background: #3A4A9F; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #F5A623; }
+        .export-btn { background: #22c55e; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.9em; }
+        .export-btn:hover { background: #16a34a; }
+        .bulk-actions { display: none; background: #454FBF; border: 2px solid #F5A623; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .bulk-actions.show { display: block; }
+        .no-results { text-align: center; padding: 40px; color: #ccc; }
+        .zodiac-emoji { font-size: 1.5em; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Astrology Client Dashboard</h1>
+            <p>Manage your celestial consultations with cosmic precision</p>
+        </div>
+
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-number" id="totalClients">0</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeClients">0</div>
+                <div class="stat-label">Active Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalConsultations">0</div>
+                <div class="stat-label">Total Consultations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="popularSign">-</div>
+                <div class="stat-label">Popular Sign</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="add-btn" onclick="openAddClientModal()">+ Add Client</button>
+            <input type="text" class="search-input" placeholder="Search clients..." id="searchInput" onkeyup="filterClients()">
+            <select class="filter-select" id="signFilter" onchange="filterClients()">
+                <option value="">All Signs</option>
+                <option value="Aries">Aries</option>
+                <option value="Taurus">Taurus</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Cancer">Cancer</option>
+                <option value="Leo">Leo</option>
+                <option value="Virgo">Virgo</option>
+                <option value="Libra">Libra</option>
+                <option value="Scorpio">Scorpio</option>
+                <option value="Sagittarius">Sagittarius</option>
+                <option value="Capricorn">Capricorn</option>
+                <option value="Aquarius">Aquarius</option>
+                <option value="Pisces">Pisces</option>
+            </select>
+            <select class="filter-select" id="statusFilter" onchange="filterClients()">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+            <button class="export-btn" onclick="exportData()">Export CSV</button>
+        </div>
+
+        <div class="bulk-actions" id="bulkActions">
+            <strong>Bulk Actions:</strong>
+            <button class="action-btn" onclick="bulkDelete()">Delete Selected</button>
+            <button class="action-btn" onclick="bulkStatusChange('Active')">Mark Active</button>
+            <button class="action-btn" onclick="bulkStatusChange('Inactive')">Mark Inactive</button>
+        </div>
+
+        <div class="clients-grid" id="clientsGrid"></div>
+    </div>
+
+    <!-- Add/Edit Client Modal -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Client</h2>
+            </div>
+            <form id="clientForm">
+                <div class="form-group">
+                    <label for="clientName">Full Name *</label>
+                    <input type="text" id="clientName" required>
+                </div>
+                <div class="form-group">
+                    <label for="clientBirthDate">Birth Date *</label>
+                    <input type="date" id="clientBirthDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="clientBirthTime">Birth Time</label>
+                    <input type="time" id="clientBirthTime">
+                </div>
+                <div class="form-group">
+                    <label for="clientBirthPlace">Birth Place</label>
+                    <input type="text" id="clientBirthPlace" placeholder="City, Country">
+                </div>
+                <div class="form-group">
+                    <label for="clientSign">Zodiac Sign *</label>
+                    <select id="clientSign" required>
+                        <option value="">Select Sign</option>
+                        <option value="Aries">♈ Aries</option>
+                        <option value="Taurus">♉ Taurus</option>
+                        <option value="Gemini">♊ Gemini</option>
+                        <option value="Cancer">♋ Cancer</option>
+                        <option value="Leo">♌ Leo</option>
+                        <option value="Virgo">♍ Virgo</option>
+                        <option value="Libra">♎ Libra</option>
+                        <option value="Scorpio">♏ Scorpio</option>
+                        <option value="Sagittarius">♐ Sagittarius</option>
+                        <option value="Capricorn">♑ Capricorn</option>
+                        <option value="Aquarius">♒ Aquarius</option>
+                        <option value="Pisces">♓ Pisces</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="clientEmail">Email</label>
+                    <input type="email" id="clientEmail">
+                </div>
+                <div class="form-group">
+                    <label for="clientPhone">Phone</label>
+                    <input type="tel" id="clientPhone">
+                </div>
+                <div class="form-group">
+                    <label for="clientStatus">Status</label>
+                    <select id="clientStatus">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="clientNotes">Notes</label>
+                    <textarea id="clientNotes" rows="4" placeholder="Additional notes about the client..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Details Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDetailsModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="detailsTitle">Client Details</h2>
+            </div>
+            <div id="detailsContent"></div>
+        </div>
+    </div>
+
+    <div id="toast">Client added successfully!</div>
+
+    <script>
+        let clients = [
+            { 
+                id: 1, 
+                name: "Priya Sharma", 
+                birthDate: "1992-03-15", 
+                birthTime: "14:30",
+                birthPlace: "Mumbai, India",
+                sign: "Pisces", 
+                status: "Active",
+                email: "priya.sharma@email.com",
+                phone: "+91 9876543210",
+                notes: "Interested in career guidance and relationship compatibility.",
+                consultations: [
+                    { date: "2024-01-15", type: "Birth Chart Reading", notes: "Detailed analysis of career prospects" },
+                    { date: "2024-02-20", type: "Relationship Compatibility", notes: "Compatibility with partner" }
+                ]
+            }
+        ];
+
+        let currentEditingId = null;
+        let selectedClients = new Set();
+        let filteredClients = [...clients];
+
+        const zodiacEmojis = {
+            'Aries': '♈', 'Taurus': '♉', 'Gemini': '♊', 'Cancer': '♋',
+            'Leo': '♌', 'Virgo': '♍', 'Libra': '♎', 'Scorpio': '♏',
+            'Sagittarius': '♐', 'Capricorn': '♑', 'Aquarius': '♒', 'Pisces': '♓'
+        };
+
+        function updateStats() {
+            const total = clients.length;
+            const active = clients.filter(c => c.status === 'Active').length;
+            const totalConsultations = clients.reduce((sum, c) => sum + (c.consultations ? c.consultations.length : 0), 0);
+            
+            const signCounts = {};
+            clients.forEach(c => {
+                signCounts[c.sign] = (signCounts[c.sign] || 0) + 1;
+            });
+            const popularSign = Object.keys(signCounts).reduce((a, b) => signCounts[a] > signCounts[b] ? a : b, '-');
+
+            document.getElementById('totalClients').textContent = total;
+            document.getElementById('activeClients').textContent = active;
+            document.getElementById('totalConsultations').textContent = totalConsultations;
+            document.getElementById('popularSign').textContent = popularSign !== '-' ? `${zodiacEmojis[popularSign]} ${popularSign}` : '-';
+        }
+
+        function renderClients() {
+            const grid = document.getElementById('clientsGrid');
+            grid.innerHTML = '';
+            
+            if (filteredClients.length === 0) {
+                grid.innerHTML = '<div class="no-results">No clients found matching your criteria</div>';
+                return;
+            }
+
+            filteredClients.forEach(client => {
+                const card = document.createElement('div');
+                card.className = 'client-card';
+                card.innerHTML = `
+                    <div class="client-header">
+                        <div class="client-name">${zodiacEmojis[client.sign]} ${client.name}</div>
+                        <span class="status-badge ${client.status.toLowerCase()}">${client.status}</span>
+                    </div>
+                    <div class="client-info">
+                        <div><strong>Sign:</strong> ${client.sign}</div>
+                        <div><strong>Birth Date:</strong> ${client.birthDate}</div>
+                        <div><strong>Email:</strong> ${client.email || 'N/A'}</div>
+                        <div><strong>Phone:</strong> ${client.phone || 'N/A'}</div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="action-btn" onclick="viewDetails(${client.id})">View Details</button>
+                        <button class="action-btn" onclick="editClient(${client.id})">Edit</button>
+                        <button class="action-btn" onclick="addConsultation(${client.id})">Add Consultation</button>
+                        <button class="action-btn delete" onclick="deleteClient(${client.id})">Delete</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterClients() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const signFilter = document.getElementById('signFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredClients = clients.filter(client => {
+                const matchesSearch = client.name.toLowerCase().includes(searchTerm) ||
+                                    client.sign.toLowerCase().includes(searchTerm) ||
+                                    (client.email && client.email.toLowerCase().includes(searchTerm));
+                const matchesSign = !signFilter || client.sign === signFilter;
+                const matchesStatus = !statusFilter || client.status === statusFilter;
+                
+                return matchesSearch && matchesSign && matchesStatus;
+            });
+
+            renderClients();
+        }
+
+        function openAddClientModal() {
+            currentEditingId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Client';
+            document.getElementById('clientForm').reset();
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function editClient(id) {
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+
+            currentEditingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Client';
+            document.getElementById('clientName').value = client.name;
+            document.getElementById('clientBirthDate').value = client.birthDate;
+            document.getElementById('clientBirthTime').value = client.birthTime || '';
+            document.getElementById('clientBirthPlace').value = client.birthPlace || '';
+            document.getElementById('clientSign').value = client.sign;
+            document.getElementById('clientEmail').value = client.email || '';
+            document.getElementById('clientPhone').value = client.phone || '';
+            document.getElementById('clientStatus').value = client.status;
+            document.getElementById('clientNotes').value = client.notes || '';
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('clientModal').style.display = 'none';
+            currentEditingId = null;
+        }
+
+        function viewDetails(id) {
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+
+            const consultationsHtml = client.consultations ? 
+                client.consultations.map(c => `
+                    <div class="consultation-item">
+                        <strong>${c.date}</strong> - ${c.type}
+                        <div>${c.notes}</div>
+                    </div>
+                `).join('') : '<div>No consultations recorded</div>';
+
+            document.getElementById('detailsTitle').textContent = `${client.name} Details`;
+            document.getElementById('detailsContent').innerHTML = `
+                <div class="detailed-info">
+                    <div class="info-section">
+                        <h4>Personal Information</h4>
+                        <p><strong>Name:</strong> ${client.name}</p>
+                        <p><strong>Birth Date:</strong> ${client.birthDate}</p>
+                        <p><strong>Birth Time:</strong> ${client.birthTime || 'N/A'}</p>
+                        <p><strong>Birth Place:</strong> ${client.birthPlace || 'N/A'}</p>
+                        <p><strong>Zodiac Sign:</strong> ${zodiacEmojis[client.sign]} ${client.sign}</p>
+                        <p><strong>Status:</strong> ${client.status}</p>
+                    </div>
+                    <div class="info-section">
+                        <h4>Contact Information</h4>
+                        <p><strong>Email:</strong> ${client.email || 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${client.phone || 'N/A'}</p>
+                        <p><strong>Notes:</strong> ${client.notes || 'None'}</p>
+                    </div>
+                </div>
+                <div class="consultation-history">
+                    <h4>Consultation History</h4>
+                    ${consultationsHtml}
+                </div>
+            `;
+            document.getElementById('detailsModal').style.display = 'block';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        function addConsultation(id) {
+            const type = prompt('Consultation Type:');
+            const notes = prompt('Consultation Notes:');
+            if (type && notes) {
+                const client = clients.find(c => c.id === id);
+                if (!client.consultations) client.consultations = [];
+                client.consultations.push({
+                    date: new Date().toISOString().split('T')[0],
+                    type: type,
+                    notes: notes
+                });
+                updateStats();
+                showToast('Consultation added successfully!');
+            }
+        }
+
+        function deleteClient(id) {
+            if (confirm('Are you sure you want to delete this client?')) {
+                clients = clients.filter(c => c.id !== id);
+                filterClients();
+                updateStats();
+                showToast('Client deleted successfully!');
+            }
+        }
+
+        function exportData() {
+            const csvContent = [
+                ['Name', 'Birth Date', 'Birth Time', 'Birth Place', 'Sign', 'Email', 'Phone', 'Status', 'Notes'],
+                ...clients.map(c => [
+                    c.name, c.birthDate, c.birthTime || '', c.birthPlace || '', c.sign, 
+                    c.email || '', c.phone || '', c.status, c.notes || ''
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'astrology_clients.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully!');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Form submission handler
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const clientData = {
+                name: document.getElementById('clientName').value,
+                birthDate: document.getElementById('clientBirthDate').value,
+                birthTime: document.getElementById('clientBirthTime').value,
+                birthPlace: document.getElementById('clientBirthPlace').value,
+                sign: document.getElementById('clientSign').value,
+                email: document.getElementById('clientEmail').value,
+                phone: document.getElementById('clientPhone').value,
+                status: document.getElementById('clientStatus').value,
+                notes: document.getElementById('clientNotes').value
+            };
+
+            if (currentEditingId) {
+                // Edit existing client
+                const index = clients.findIndex(c => c.id === currentEditingId);
+                clients[index] = { ...clients[index], ...clientData };
+                showToast('Client updated successfully!');
+            } else {
+                // Add new client
+                const newId = Math.max(...clients.map(c => c.id), 0) + 1;
+                clients.push({ id: newId, ...clientData, consultations: [] });
+                showToast('Client added successfully!');
+            }
+
+            closeModal();
+            filterClients();
+            updateStats();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('clientModal')) {
+                closeModal();
+            }
+            if (e.target === document.getElementById('detailsModal')) {
+                closeDetailsModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            renderClients();
+        });
+    </script>
+</body>
+</html>

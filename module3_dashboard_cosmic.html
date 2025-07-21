@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Karma Astrology - Client Dashboard</title>
+    <style>
+        body {
+            background: #2B3990;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #F5A623;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: #454FBF;
+            border: 2px solid #F5A623;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            background: #454FBF;
+            border: 2px solid #F5A623;
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            font-size: 1em;
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        .button {
+            background: #F5A623;
+            color: #2B3990;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .button:hover {
+            background: #E6951A;
+        }
+
+        .output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            color: #ffebcd;
+        }
+
+        .client-card {
+            background: #2B3990;
+            border: 2px solid #F5A623;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🌌 Karma Astrology Client Dashboard</h1>
+
+<div class="section">
+    <h3>🔑 Login to View Clients</h3>
+    <input type="text" id="login_username" placeholder="Enter Username">
+    <input type="password" id="login_password" placeholder="Enter Password">
+    <button class="button" onclick="login()">Login & View Clients</button>
+    <div class="output" id="login_output"></div>
+</div>
+
+<div class="section">
+    <h3>👥 Registered Clients</h3>
+    <div id="client_list" class="output">Login to view clients.</div>
+</div>
+
+<div class="footer">Karma Astrology © 2025 | Cosmic Blue & Gold Theme</div>
+
+<script>
+    let token = "";
+
+    async function login() {
+        const username = document.getElementById("login_username").value;
+        const password = document.getElementById("login_password").value;
+        const params = new URLSearchParams();
+        params.append("username", username);
+        params.append("password", password);
+
+        const res = await fetch("http://127.0.0.1:8000/token", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: params
+        });
+        const data = await res.json();
+        document.getElementById("login_output").innerText = JSON.stringify(data, null, 2);
+
+        if (data.access_token) {
+            token = data.access_token;
+            loadClients();
+        }
+    }
+
+    async function loadClients() {
+        const res = await fetch("http://127.0.0.1:8000/clients", {
+            headers: {"Authorization": "Bearer " + token}
+        });
+        const clients = await res.json();
+
+        let html = "";
+        clients.forEach(c => {
+            html += `<div class="client-card">🔹 ID: ${c.id} | Username: ${c.username}</div>`;
+        });
+
+        document.getElementById("client_list").innerHTML = html;
+    }
+</script>
+
+</body>
+</html>

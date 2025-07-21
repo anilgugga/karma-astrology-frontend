@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Core Chart Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    const CoreChartEngine = () => {
+      const [chartType, setChartType] = useState('western');
+      const [selectedPlanet, setSelectedPlanet] = useState(null);
+      const [showAspects, setShowAspects] = useState(true);
+      const canvasRef = useRef(null);
+
+      // Chart configuration constants
+      const CHART_CONFIG = {
+        canvas: {
+          width: 600,
+          height: 600,
+          centerX: 300,
+          centerY: 300
+        },
+        circles: {
+          outer: 280,
+          inner: 200,
+          houses: 240,
+          planets: 220
+        },
+        colors: {
+          background: '#0f172a',
+          circle: '#334155',
+          houses: '#475569',
+          planets: {
+            SUN: '#fbbf24',
+            MOON: '#e5e7eb',
+            MERCURY: '#10b981',
+            VENUS: '#f472b6',
+            MARS: '#ef4444',
+            JUPITER: '#3b82f6',
+            SATURN: '#6366f1',
+            RAHU: '#8b5cf6',
+            KETU: '#f59e0b'
+          },
+          aspects: {
+            conjunction: '#10b981',
+            opposition: '#ef4444',
+            trine: '#3b82f6',
+            square: '#f59e0b',
+            sextile: '#06b6d4',
+            quincunx: '#8b5cf6'
+          },
+          text: '#f8fafc',
+          highlight: '#fbbf24'
+        },
+        fonts: {
+          planet: '12px Arial, sans-serif',
+          house: '11px Arial, sans-serif',
+          degree: '9px Arial, sans-serif'
+        }
+      };
+
+      // Sample chart data for demonstration
+      const sampleChartData = {
+        planetPositions: {
+          SUN: { 
+            longitude: 45.5, 
+            zodiacPosition: { sign: { name: 'Taurus', symbol: '♉' }, degreeInSign: 15.5 },
+            house: 1,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          MOON: { 
+            longitude: 120.3, 
+            zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 0.3 },
+            house: 4,
+            dignity: { dignity: 'Own Sign', strength: 100 }
+          },
+          MERCURY: { 
+            longitude: 200.7, 
+            zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 20.7 },
+            house: 7,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          VENUS: { 
+            longitude: 330.2, 
+            zodiacPosition: { sign: { name: 'Pisces', symbol: '♓' }, degreeInSign: 0.2 },
+            house: 11,
+            dignity: { dignity: 'Exaltation', strength: 95 }
+          },
+          MARS: { 
+            longitude: 280.8, 
+            zodiacPosition: { sign: { name: 'Capricorn', symbol: '♑' }, degreeInSign: 10.8 },
+            house: 9,
+            dignity: { dignity: 'Exaltation', strength: 88 }
+          },
+          JUPITER: { 
+            longitude: 95.4, 
+            zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 5.4 },
+            house: 3,
+            dignity: { dignity: 'Exaltation', strength: 92 }
+          },
+          SATURN: { 
+            longitude: 185.6, 
+            zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 5.6 },
+            house: 6,
+            dignity: { dignity: 'Exaltation', strength: 85 }
+          },
+          RAHU: { 
+            longitude: 75.9, 
+            zodiacPosition: { sign: { name: 'Gemini', symbol: '♊' }, degreeInSign: 15.9 },
+            house: 2,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          KETU: { 
+            longitude: 255.9, 
+            zodiacPosition: { sign: { name: 'Sagittarius', symbol: '♐' }, degreeInSign: 15.9 },
+            house: 8,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          }
+        },
+        houses: [
+          { house: 1, cusp: 0, sign: { name: 'Aries', symbol: '♈' } },
+          { house: 2, cusp: 30, sign: { name: 'Taurus', symbol: '♉' } },
+          { house: 3, cusp: 60, sign: { name: 'Gemini', symbol: '♊' } },
+          { house: 4, cusp: 90, sign: { name: 'Cancer', symbol: '♋' } },
+          { house: 5, cusp: 120, sign: { name: 'Leo', symbol: '♌' } },
+          { house: 6, cusp: 150, sign: { name: 'Virgo', symbol: '♍' } },
+          { house: 7, cusp: 180, sign: { name: 'Libra', symbol: '♎' } },
+          { house: 8, cusp: 210, sign: { name: 'Scorpio', symbol: '♏' } },
+          { house: 9, cusp: 240, sign: { name: 'Sagittarius', symbol: '♐' } },
+          { house: 10, cusp: 270, sign: { name: 'Capricorn', symbol: '♑' } },
+          { house: 11, cusp: 300, sign: { name: 'Aquarius', symbol: '♒' } },
+          { house: 12, cusp: 330, sign: { name: 'Pisces', symbol: '♓' } }
+        ],
+        aspects: [
+          { planet1: 'SUN', planet2: 'MOON', aspect: 'Trine', orb: 2.3, influence: { strength: 0.8, nature: 'Harmonious' } },
+          { planet1: 'VENUS', planet2: 'JUPITER', aspect: 'Square', orb: 4.1, influence: { strength: 0.6, nature: 'Challenging' } },
+          { planet1: 'MARS', planet2: 'SATURN', aspect: 'Opposition', orb: 1.8, influence: { strength: 0.9, nature: 'Challenging' } }
+        ]
+      };
+
+      // Utility function to convert longitude to canvas coordinates
+      const longitudeToCanvas = (longitude, radius) => {
+        const angle = (longitude - 90) * (Math.PI / 180);
+        const x = CHART_CONFIG.canvas.centerX + radius * Math.cos(angle);
+        const y = CHART_CONFIG.canvas.centerY + radius * Math.sin(angle);
+        return { x, y };
+      };
+
+      // Main rendering function
+      const renderChart = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.fillStyle = CHART_CONFIG.colors.background;
+        ctx.fillRect(0, 0, CHART_CONFIG.canvas.width, CHART_CONFIG.canvas.height);
+
+        // Draw basic Western circular chart structure
+        drawWesternChart(ctx);
+        drawZodiacSigns(ctx);
+        drawPlanets(ctx);
+        if (showAspects) drawAspects(ctx);
+      };
+
+      // Draw Western circular chart base
+      const drawWesternChart = (ctx) => {
+        const { centerX, centerY } = CHART_CONFIG.canvas;
+        const { outer, inner } = CHART_CONFIG.circles;
+
+        // Draw outer circle
+        ctx.strokeStyle = CHART_CONFIG.colors.circle;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outer, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Draw inner circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, inner, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Draw house divisions
+        ctx.strokeStyle = CHART_CONFIG.colors.houses;
+        ctx.lineWidth = 1;
+        
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * 30 - 90) * (Math.PI / 180);
+          const innerPoint = {
+            x: centerX + inner * Math.cos(angle),
+            y: centerY + inner * Math.sin(angle)
+          };
+          const outerPoint = {
+            x: centerX + outer * Math.cos(angle),
+            y: centerY + outer * Math.sin(angle)
+          };
+          
+          ctx.beginPath();
+          ctx.moveTo(innerPoint.x, innerPoint.y);
+          ctx.lineTo(outerPoint.x, outerPoint.y);
+          ctx.stroke();
+        }
+      };
+
+      // Draw zodiac signs and house numbers
+      const drawZodiacSigns = (ctx) => {
+        ctx.fillStyle = CHART_CONFIG.colors.text;
+        ctx.font = CHART_CONFIG.fonts.house;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        sampleChartData.houses.forEach((house, index) => {
+          const radius = (CHART_CONFIG.circles.outer + CHART_CONFIG.circles.houses) / 2;
+          const pos = longitudeToCanvas(index * 30 + 15, radius);
+          
+          ctx.fillText(house.sign.symbol, pos.x, pos.y - 8);
+          ctx.font = '10px Arial, sans-serif';
+          ctx.fillText(house.house.toString(), pos.x, pos.y + 8);
+          ctx.font = CHART_CONFIG.fonts.house;
+        });
+      };
+
+      // Draw planets
+      const drawPlanets = (ctx) => {
+        const planetSymbols = {
+          SUN: '☉', MOON: '☽', MERCURY: '☿', VENUS: '♀', MARS: '♂',
+          JUPITER: '♃', SATURN: '♄', RAHU: '☊', KETU: '☋'
+        };
+
+        Object.entries(sampleChartData.planetPositions).forEach(([planet, data]) => {
+          const pos = longitudeToCanvas(data.longitude, CHART_CONFIG.circles.planets);
+          
+          // Planet background circle
+          ctx.fillStyle = CHART_CONFIG.colors.planets[planet] || '#ffffff';
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 10, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Planet symbol
+          ctx.fillStyle = '#000000';
+          ctx.font = CHART_CONFIG.fonts.planet;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(planetSymbols[planet] || planet.charAt(0), pos.x, pos.y);
+
+          // Highlight selected planet
+          if (selectedPlanet === planet) {
+            ctx.strokeStyle = CHART_CONFIG.colors.highlight;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 13, 0, 2 * Math.PI);
+            ctx.stroke();
+          }
+
+          // Draw degree information
+          ctx.fillStyle = CHART_CONFIG.colors.text;
+          ctx.font = CHART_CONFIG.fonts.degree;
+          const degree = Math.floor(data.zodiacPosition.degreeInSign);
+          ctx.fillText(`${degree}°`, pos.x, pos.y + 22);
+        });
+      };
+
+      // Draw aspects
+      const drawAspects = (ctx) => {
+        sampleChartData.aspects.forEach(aspect => {
+          const planet1Data = sampleChartData.planetPositions[aspect.planet1];
+          const planet2Data = sampleChartData.planetPositions[aspect.planet2];
+          
+          if (!planet1Data || !planet2Data) return;
+
+          const pos1 = longitudeToCanvas(planet1Data.longitude, CHART_CONFIG.circles.planets);
+          const pos2 = longitudeToCanvas(planet2Data.longitude, CHART_CONFIG.circles.planets);
+
+          const aspectColor = CHART_CONFIG.colors.aspects[aspect.aspect.toLowerCase()] || '#888888';
+          ctx.strokeStyle = aspectColor;
+          ctx.lineWidth = aspect.influence.nature === 'Harmonious' ? 2 : 1;
+          ctx.setLineDash(aspect.influence.nature === 'Challenging' ? [5, 5] : []);
+
+          ctx.beginPath();
+          ctx.moveTo(pos1.x, pos1.y);
+          ctx.lineTo(pos2.x, pos2.y);
+          ctx.stroke();
+          
+          ctx.setLineDash([]);
+        });
+      };
+
+      // Handle canvas clicks
+      const handleCanvasClick = (event) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        Object.entries(sampleChartData.planetPositions).forEach(([planet, data]) => {
+          const pos = longitudeToCanvas(data.longitude, CHART_CONFIG.circles.planets);
+          const distance = Math.sqrt((clickX - pos.x) ** 2 + (clickY - pos.y) ** 2);
+          
+          if (distance <= 15) {
+            setSelectedPlanet(selectedPlanet === planet ? null : planet);
+          }
+        });
+      };
+
+      useEffect(() => {
+        renderChart();
+      }, [selectedPlanet, showAspects, chartType]);
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-white p-6">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-center mb-8 text-amber-400">
+              ✨ Core Chart Engine ✨
+            </h1>
+            
+            <div className="bg-slate-800 p-6 rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Birth Chart</h2>
+                <div className="flex gap-4">
+                  <button
+                    className={`px-4 py-2 rounded text-sm ${
+                      showAspects ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 hover:bg-slate-700'
+                    }`}
+                    onClick={() => setShowAspects(!showAspects)}
+                  >
+                    {showAspects ? 'Hide Aspects' : 'Show Aspects'}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <canvas
+                  ref={canvasRef}
+                  width={CHART_CONFIG.canvas.width}
+                  height={CHART_CONFIG.canvas.height}
+                  className="border border-slate-600 rounded-lg cursor-pointer"
+                  onClick={handleCanvasClick}
+                />
+              </div>
+              
+              {selectedPlanet && (
+                <div className="mt-4 p-4 bg-slate-700 rounded-lg">
+                  <h3 className="font-semibold text-amber-400 mb-2">{selectedPlanet}</h3>
+                  <p className="text-sm text-gray-300">
+                    Position: {sampleChartData.planetPositions[selectedPlanet].zodiacPosition.sign.name} {Math.floor(sampleChartData.planetPositions[selectedPlanet].zodiacPosition.degreeInSign)}°
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    House: {sampleChartData.planetPositions[selectedPlanet].house}
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Dignity: {sampleChartData.planetPositions[selectedPlanet].dignity.dignity}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<CoreChartEngine />, document.getElementById('root'));
+  </script>
+</body>
+</html>

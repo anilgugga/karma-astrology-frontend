@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Chart - 9th Portion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .ultimate-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .premium-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            margin: 1rem 0;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 70px rgba(0, 0, 0, 0.2);
+        }
+        
+        .holographic-metric {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            color: white;
+            margin: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        
+        .holographic-metric::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .holographic-metric:hover {
+            transform: scale(1.05) rotateY(5deg);
+            box-shadow: 0 20px 40px rgba(79, 172, 254, 0.3);
+        }
+        
+        .chart-canvas {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .neon-text {
+            color: #00f2fe;
+            text-shadow: 0 0 10px #00f2fe, 0 0 20px #00f2fe, 0 0 30px #00f2fe;
+            font-weight: 800;
+        }
+        
+        .status-orb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            position: relative;
+            animation: pulse-orb 2s infinite;
+        }
+        
+        @keyframes pulse-orb {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .status-healthy { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-critical { background: #ef4444; }
+        
+        .data-visualization {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .metric-display {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .advanced-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .interactive-element {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .interactive-element:hover {
+            transform: translateY(-3px);
+        }
+        
+        .neural-network-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            z-index: 1;
+        }
+        
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            border: 1px solid #10b981;
+            color: #10b981;
+            font-weight: 600;
+            animation: live-blink 1s infinite;
+        }
+        
+        @keyframes live-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Advanced Core Chart Component - 9th Portion
+        const CoreChart9 = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [systemHealth, setSystemHealth] = useState({
+                overall: 94,
+                cpu: 72,
+                memory: 68,
+                storage: 45,
+                network: 87,
+                security: 96
+            });
+            
+            const [liveMetrics, setLiveMetrics] = useState([]);
+            const [networkActivity, setNetworkActivity] = useState([]);
+            const [aiInsights, setAiInsights] = useState([
+                { insight: "Optimal performance window detected", confidence: 95, priority: "high" },
+                { insight: "Memory usage trending upward", confidence: 78, priority: "medium" },
+                { insight: "Network latency within normal range", confidence: 92, priority: "low" },
+                { insight: "Security protocols functioning optimally", confidence: 98, priority: "high" }
+            ]);
+            
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+            const networkRef = useRef(null);
+            
+            // Generate floating particles
+            const generateParticles = () => {
+                const particles = [];
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        id: i,
+                        x: Math.random() * 100,
+                        y: Math.random() * 100,
+                        delay: Math.random() * 6
+                    });
+                }
+                return particles;
+            };
+            
+            const [particles] = useState(generateParticles);
+            
+            // Advanced D3.js Visualization
+            useEffect(() => {
+                if (!canvasRef.current) return;
+                
+                const svg = d3.select(canvasRef.current);
+                svg.selectAll("*").remove();
+                
+                const width = 800;
+                const height = 300;
+                const data = liveMetrics.slice(-20);
+                
+                svg.attr("width", width).attr("height", height);
+                
+                if (data.length > 0) {
+                    const xScale = d3.scaleLinear()
+                        .domain([0, data.length - 1])
+                        .range([50, width - 50]);
+                    
+                    const yScale = d3.scaleLinear()
+                        .domain([0, 100])
+                        .range([height - 50, 50]);
+                    
+                    const line = d3.line()
+                        .x((d, i) => xScale(i))
+                        .y(d => yScale(d.value))
+                        .curve(d3.curveCardinal);
+                    
+                    // Gradient definition
+                    const gradient = svg.append("defs")
+                        .append("linearGradient")
+                        .attr("id", "gradient")
+                        .attr("gradientUnits", "userSpaceOnUse")
+                        .attr("x1", 0).attr("y1", height)
+                        .attr("x2", 0).attr("y2", 0);
+                    
+                    gradient.append("stop")
+                        .attr("offset", "0%")
+                        .attr("stop-color", "#4facfe")
+                        .attr("stop-opacity", 0.1);
+                    
+                    gradient.append("stop")
+                        .attr("offset", "100%")
+                        .attr("stop-color", "#00f2fe")
+                        .attr("stop-opacity", 0.8);
+                    
+                    // Area fill
+                    const area = d3.area()
+                        .x((d, i) => xScale(i))
+                        .y0(height - 50)
+                        .y1(d => yScale(d.value))
+                        .curve(d3.curveCardinal);
+                    
+                    svg.append("path")
+                        .datum(data)
+                        .attr("fill", "url(#gradient)")
+                        .attr("d", area);
+                    
+                    // Main line
+                    svg.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", "#4facfe")
+                        .attr("stroke-width", 3)
+                        .attr("d", line);
+                    
+                    // Data points
+                    svg.selectAll(".dot")
+                        .data(data)
+                        .enter().append("circle")
+                        .attr("class", "dot")
+                        .attr("cx", (d, i) => xScale(i))
+                        .attr("cy", d => yScale(d.value))
+                        .attr("r", 4)
+                        .attr("fill", "#00f2fe")
+                        .attr("stroke", "#ffffff")
+                        .attr("stroke-width", 2);
+                }
+            }, [liveMetrics]);
+            
+            // Chart.js Implementation
+            useEffect(() => {
+                if (!chartRef.current) return;
+                
+                const ctx = chartRef.current.getContext('2d');
+                
+                // Destroy existing chart
+                if (chartRef.current.chart) {
+                    chartRef.current.chart.destroy();
+                }
+                
+                chartRef.current.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['CPU', 'Memory', 'Storage', 'Network', 'Security'],
+                        datasets: [{
+                            data: [
+                                systemHealth.cpu,
+                                systemHealth.memory,
+                                systemHealth.storage,
+                                systemHealth.network,
+                                systemHealth.security
+                            ],
+                            backgroundColor: [
+                                '#ff6b6b',
+                                '#4ecdc4',
+                                '#45b7d1',
+                                '#96ceb4',
+                                '#ffeaa7'
+                            ],
+                            borderWidth: 3,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }, [systemHealth]);
+            
+            // Network Activity Visualization
+            useEffect(() => {
+                if (!networkRef.current) return;
+                
+                const ctx = networkRef.current.getContext('2d');
+                
+                if (networkRef.current.chart) {
+                    networkRef.current.chart.destroy();
+                }
+                
+                networkRef.current.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: networkActivity.map(item => item.time),
+                        datasets: [{
+                            label: 'Network Traffic',
+                            data: networkActivity.map(item => item.traffic),
+                            borderColor: '#4facfe',
+                            backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Latency',
+                            data: networkActivity.map(item => item.latency),
+                            borderColor: '#00f2fe',
+                            backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+            }, [networkActivity]);
+            
+            // Real-time data updates
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentTime(new Date());
+                    
+                    // Update live metrics
+                    const newMetric = {
+                        time: new Date().toLocaleTimeString(),
+                        value: Math.floor(Math.random() * 100),
+                        secondary: Math.floor(Math.random() * 80) + 20
+                    };
+                    
+                    setLiveMetrics(prev => [...prev.slice(-19), newMetric]);
+                    
+                    // Update network activity
+                    const newActivity = {
+                        time: new Date().toLocaleTimeString(),
+                        traffic: Math.floor(Math.random() * 1000) + 500,
+                        latency: Math.floor(Math.random() * 100) + 10
+                    };
+                    
+                    setNetworkActivity(prev => [...prev.slice(-14), newActivity]);
+                    
+                    // Update system health
+                    setSystemHealth(prev => ({
+                        overall: Math.max(85, Math.min(100, prev.overall + (Math.random() - 0.5) * 4)),
+                        cpu: Math.max(0, Math.min(100, prev.cpu + (Math.random() - 0.5) * 10)),
+                        memory: Math.max(0, Math.min(100, prev.memory + (Math.random() - 0.5) * 8)),
+                        storage: Math.max(0, Math.min(100, prev.storage + (Math.random() - 0.5) * 3)),
+                        network: Math.max(0, Math.min(100, prev.network + (Math.random() - 0.5) * 12)),
+                        security: Math.max(90, Math.min(100, prev.security + (Math.random() - 0.5) * 2))
+                    }));
+                }, 1500);
+                
+                return () => clearInterval(interval);
+            }, []);
+            
+            const MetricCard = ({ title, value, unit, status, trend }) => (
+                <div className="holographic-metric interactive-element">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold">{title}</h3>
+                        <div className={`status-orb status-${status}`}></div>
+                    </div>
+                    <div className="metric-display">{Math.round(value)}{unit}</div>
+                    <div className="text-sm opacity-80 mt-2">
+                        {trend > 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}% change
+                    </div>
+                </div>
+            );
+            
+            return (
+                <div className="ultimate-dashboard">
+                    {/* Floating Particles */}
+                    <div className="floating-particles">
+                        {particles.map(particle => (
+                            <div
+                                key={particle.id}
+                                className="particle"
+                                style={{
+                                    left: `${particle.x}%`,
+                                    top: `${particle.y}%`,
+                                    animationDelay: `${particle.delay}s`
+                                }}
+                            />
+                        ))}
+                    </div>
+                    
+                    <div className="max-w-7xl mx-auto relative z-10">
+                        {/* Premium Header */}
+                        <div className="premium-card text-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-6xl font-bold neon-text mb-2">
+                                        Neural Analytics Core
+                                    </h1>
+                                    <p className="text-2xl opacity-90">9th Generation Intelligence Platform</p>
+                                    <div className="live-indicator mt-4">
+                                        <div className="status-orb status-healthy mr-2"></div>
+                                        LIVE MONITORING
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold opacity-80">
+                                        {currentTime.toLocaleDateString('en-US', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}
+                                    </div>
+                                    <div className="text-5xl font-bold neon-text">
+                                        {currentTime.toLocaleTimeString()}
+                                    </div>
+                                    <div className="text-lg opacity-70 mt-2">
+                                        System Health: {systemHealth.overall.toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Advanced Metrics Grid */}
+                        <div className="advanced-grid">
+                            <MetricCard 
+                                title="CPU Performance" 
+                                value={systemHealth.cpu} 
+                                unit="%" 
+                                status={systemHealth.cpu > 80 ? "warning" : "healthy"}
+                                trend={2.3} 
+                            />
+                            <MetricCard 
+                                title="Memory Usage" 
+                                value={systemHealth.memory} 
+                                unit="%" 
+                                status={systemHealth.memory > 85 ? "critical" : "healthy"}
+                                trend={-1.2} 
+                            />
+                            <MetricCard 
+                                title="Storage Health" 
+                                value={systemHealth.storage} 
+                                unit="%" 
+                                status="healthy"
+                                trend={0.8} 
+                            />
+                            <MetricCard 
+                                title="Network Speed" 
+                                value={systemHealth.network} 
+                                unit="%" 
+                                status="healthy"
+                                trend={5.1} 
+                            />
+                        </div>
+                        
+                        {/* Advanced D3.js Visualization */}
+                        <div className="chart-canvas">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">Real-time Performance Stream</h2>
+                            <div className="data-visualization">
+                                <svg ref={canvasRef}></svg>
+                            </div>
+                        </div>
+                        
+                        {/* Multi-Chart Dashboard */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* System Health Doughnut */}
+                            <div className="chart-canvas">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">System Health Distribution</h2>
+                                <div className="data-visualization">
+                                    <canvas ref={chartRef}></canvas>
+                                </div>
+                            </div>
+                            
+                            {/* Network Activity */}
+                            <div className="chart-canvas">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Network Activity Monitor</h2>
+                                <div className="data-visualization">
+                                    <canvas ref={networkRef}></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* AI Insights Panel */}
+                        <div className="premium-card text-white">
+                            <h2 className="text-3xl font-bold neon-text mb-6">AI-Powered Insights</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {aiInsights.map((insight, index) => (
+                                    <div key={index} className="bg-white bg-opacity-10 rounded-lg p-4 interactive-element">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                insight.priority === 'high' ? 'bg-red-500' : 
+                                                insight.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                                            }`}>
+                                                {insight.priority.toUpperCase()}
+                                            </span>
+                                            <span className="text-sm opacity-70">{insight.confidence}% confidence</span>
+                                        </div>
+                                        <p className="text-sm">{insight.insight}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {/* System Status Matrix */}
+                        <div className="premium-card text-white">
+                            <h2 className="text-3xl font-bold neon-text mb-6">System Status Matrix</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {Object.entries(systemHealth).map(([key, value]) => (
+                                    <div key={key} className="text-center">
+                                        <div className="text-4xl font-bold mb-2 metric-display">
+                                            {Math.round(value)}%
+                                        </div>
+                                        <div className="text-sm opacity-70 uppercase tracking-wide">
+                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </div>
+                                        <div className={`status-orb ${
+                                            value > 90 ? 'status-healthy' : 
+                                            value > 70 ? 'status-warning' : 'status-critical'
+                                        } mx-auto mt-2`}></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Main App Component
+        const MainApp = () => {
+            return <CoreChart9 />;
+        };
+        
+        // Render the application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MainApp />);
+    </script>
+</body>
+</html>

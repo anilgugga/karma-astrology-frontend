@@ -1,0 +1,102 @@
+import React from "react";
+
+const NorthIndianChart = ({ houses, planets, onPlanetClick, showDegrees = true }) => {
+  const size = 400;
+  const center = size / 2;
+  const housePositions = [
+    { x1: center, y1: 0, x2: size, y2: center },   // 1st house
+    { x1: size, y1: center, x2: center, y2: size }, // 2nd house
+    { x1: center, y1: size, x2: 0, y2: center },    // 3rd house
+    { x1: 0, y1: center, x2: center, y2: 0 }        // 4th house (completes the diamond)
+  ];
+
+  const houseLabels = [
+    [1, 2, 3],
+    [12, null, 4],
+    [11, 10, 5],
+    [9, 8, 7],
+    [null, 6, null]
+  ];
+
+  const getHouseNumber = (row, col) => {
+    if (houseLabels[row] && houseLabels[row][col] !== null) {
+      return houseLabels[row][col];
+    }
+    return null;
+  };
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
+      <rect width={size} height={size} fill="#2B3990" stroke="#F5A623" strokeWidth="2" rx="16" />
+      
+      {/* Diamond cross lines */}
+      <line x1={center} y1={0} x2={center} y2={size} stroke="#F5A623" strokeWidth="2" />
+      <line x1={0} y1={center} x2={size} y2={center} stroke="#F5A623" strokeWidth="2" />
+      <line x1={0} y1={0} x2={size} y2={size} stroke="#F5A623" strokeWidth="2" />
+      <line x1={size} y1={0} x2={0} y2={size} stroke="#F5A623" strokeWidth="2" />
+
+      {/* House numbers and signs */}
+      {houses.map((house) => {
+        const labelPositions = {
+          1: { x: center + 60, y: center - 60 },
+          2: { x: center + 100, y: center - 100 },
+          3: { x: center, y: center - 120 },
+          4: { x: center - 100, y: center - 100 },
+          5: { x: center - 120, y: center },
+          6: { x: center - 100, y: center + 100 },
+          7: { x: center, y: center + 120 },
+          8: { x: center + 100, y: center + 100 },
+          9: { x: center + 120, y: center },
+          10: { x: center + 100, y: center - 100 },
+          11: { x: center, y: center - 120 },
+          12: { x: center - 100, y: center - 100 },
+        };
+
+        const pos = labelPositions[house.number];
+        return (
+          <text
+            key={house.number}
+            x={pos.x}
+            y={pos.y}
+            fill="#FFFFFF"
+            fontSize="14"
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            {house.number} {house.sign.symbol}
+          </text>
+        );
+      })}
+
+      {/* Planets */}
+      {planets.map((planet, index) => {
+        const pos = houses.find(h => h.number === planet.house);
+        const angle = (Math.random() * Math.PI * 2);
+        const r = 20 + index * 5;
+
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+
+        return (
+          <g
+            key={planet.name + index}
+            onClick={() => onPlanetClick && onPlanetClick(planet)}
+            className="cursor-pointer hover:scale-110 transition-transform"
+          >
+            <circle cx={x} cy={y} r="10" fill="#F5A623" stroke="#FFFFFF" strokeWidth="1" />
+            <text x={x} y={y + 4} textAnchor="middle" fill="#2B3990" fontSize="12" fontWeight="bold">
+              {planet.symbol}
+            </text>
+            {showDegrees && (
+              <text x={x} y={y + 18} textAnchor="middle" fill="#FFFFFF" fontSize="10">
+                {planet.degree.toFixed(0)}°
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+export default NorthIndianChart;

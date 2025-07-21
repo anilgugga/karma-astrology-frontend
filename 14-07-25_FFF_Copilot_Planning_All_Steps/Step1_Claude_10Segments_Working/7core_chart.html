@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Chart - 7th Portion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/recharts.min.js"></script>
+    <style>
+        .chart-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            color: white;
+            margin: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 8px;
+            margin: 0.5rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.5s ease;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-active { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+        .animated-counter {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } = Recharts;
+
+        // Core Chart Component - 7th Portion
+        const CoreChart = () => {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [metrics, setMetrics] = useState({
+                performance: 85,
+                efficiency: 92,
+                quality: 78,
+                satisfaction: 88
+            });
+
+            // Sample data for different chart types
+            const performanceData = [
+                { name: 'Jan', value: 65, target: 70 },
+                { name: 'Feb', value: 72, target: 75 },
+                { name: 'Mar', value: 68, target: 72 },
+                { name: 'Apr', value: 85, target: 80 },
+                { name: 'May', value: 92, target: 85 },
+                { name: 'Jun', value: 88, target: 90 },
+                { name: 'Jul', value: 95, target: 92 }
+            ];
+
+            const distributionData = [
+                { name: 'Category A', value: 35, color: '#4facfe' },
+                { name: 'Category B', value: 25, color: '#00f2fe' },
+                { name: 'Category C', value: 20, color: '#667eea' },
+                { name: 'Category D', value: 20, color: '#764ba2' }
+            ];
+
+            const systemStatus = [
+                { name: 'Core System', status: 'active', uptime: '99.9%' },
+                { name: 'Database', status: 'active', uptime: '98.7%' },
+                { name: 'API Gateway', status: 'warning', uptime: '97.2%' },
+                { name: 'Cache Layer', status: 'active', uptime: '99.1%' },
+                { name: 'Analytics', status: 'active', uptime: '98.9%' }
+            ];
+
+            // Update time every second
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // Simulate metric updates
+            useEffect(() => {
+                const metricTimer = setInterval(() => {
+                    setMetrics(prev => ({
+                        performance: Math.max(0, Math.min(100, prev.performance + (Math.random() - 0.5) * 10)),
+                        efficiency: Math.max(0, Math.min(100, prev.efficiency + (Math.random() - 0.5) * 8)),
+                        quality: Math.max(0, Math.min(100, prev.quality + (Math.random() - 0.5) * 12)),
+                        satisfaction: Math.max(0, Math.min(100, prev.satisfaction + (Math.random() - 0.5) * 6))
+                    }));
+                }, 3000);
+                return () => clearInterval(metricTimer);
+            }, []);
+
+            const MetricCard = ({ title, value, icon, trend }) => (
+                <div className="metric-card">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-semibold opacity-90">{title}</h3>
+                            <div className="animated-counter">{Math.round(value)}%</div>
+                        </div>
+                        <div className="text-3xl opacity-70">{icon}</div>
+                    </div>
+                    <div className="progress-bar">
+                        <div 
+                            className="progress-fill" 
+                            style={{ width: `${value}%` }}
+                        ></div>
+                    </div>
+                    <div className="text-sm opacity-80 mt-2">
+                        {trend > 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}% from last period
+                    </div>
+                </div>
+            );
+
+            const StatusIndicator = ({ status }) => (
+                <span className={`status-indicator status-${status}`}></span>
+            );
+
+            return (
+                <div className="chart-container">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="chart-card">
+                            <div className="flex items-center justify-between mb-6">
+                                <h1 className="text-4xl font-bold text-gray-800">Core Performance Dashboard</h1>
+                                <div className="text-right">
+                                    <div className="text-lg font-semibold text-gray-600">
+                                        {currentTime.toLocaleDateString()}
+                                    </div>
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {currentTime.toLocaleTimeString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Key Metrics */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <MetricCard 
+                                title="Performance" 
+                                value={metrics.performance} 
+                                icon="⚡" 
+                                trend={2.3} 
+                            />
+                            <MetricCard 
+                                title="Efficiency" 
+                                value={metrics.efficiency} 
+                                icon="🎯" 
+                                trend={1.8} 
+                            />
+                            <MetricCard 
+                                title="Quality" 
+                                value={metrics.quality} 
+                                icon="⭐" 
+                                trend={-0.5} 
+                            />
+                            <MetricCard 
+                                title="Satisfaction" 
+                                value={metrics.satisfaction} 
+                                icon="😊" 
+                                trend={3.2} 
+                            />
+                        </div>
+
+                        {/* Charts Row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            {/* Performance Trend */}
+                            <div className="chart-card">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Performance Trend</h2>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <LineChart data={performanceData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                        <XAxis dataKey="name" stroke="#64748b" />
+                                        <YAxis stroke="#64748b" />
+                                        <Tooltip 
+                                            contentStyle={{
+                                                backgroundColor: '#1f2937',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                color: 'white'
+                                            }}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="value" 
+                                            stroke="#4facfe" 
+                                            strokeWidth={3}
+                                            dot={{ fill: '#4facfe', strokeWidth: 2, r: 6 }}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="target" 
+                                            stroke="#00f2fe" 
+                                            strokeWidth={2}
+                                            strokeDasharray="5 5"
+                                            dot={{ fill: '#00f2fe', strokeWidth: 2, r: 4 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Distribution Chart */}
+                            <div className="chart-card">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Resource Distribution</h2>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <PieChart>
+                                        <Pie
+                                            data={distributionData}
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={100}
+                                            dataKey="value"
+                                            label={({ name, value }) => `${name}: ${value}%`}
+                                        >
+                                            {distributionData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            contentStyle={{
+                                                backgroundColor: '#1f2937',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                color: 'white'
+                                            }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* System Status */}
+                        <div className="chart-card">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">System Status</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {systemStatus.map((system, index) => (
+                                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center">
+                                            <StatusIndicator status={system.status} />
+                                            <span className="font-semibold text-gray-700">{system.name}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm text-gray-500">Uptime</div>
+                                            <div className="font-bold text-gray-800">{system.uptime}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Additional Analytics */}
+                        <div className="chart-card">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Monthly Performance Comparison</h2>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={performanceData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" stroke="#64748b" />
+                                    <YAxis stroke="#64748b" />
+                                    <Tooltip 
+                                        contentStyle={{
+                                            backgroundColor: '#1f2937',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            color: 'white'
+                                        }}
+                                    />
+                                    <Bar dataKey="value" fill="#4facfe" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="target" fill="#00f2fe" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const MainApp = () => {
+            return <CoreChart />;
+        };
+
+        // Render the application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MainApp />);
+    </script>
+</body>
+</html>

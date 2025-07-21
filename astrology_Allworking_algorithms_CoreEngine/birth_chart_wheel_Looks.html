@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Birth Chart Wheel - Astrology Module</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Color scheme from your reference file */
+        :root {
+            --primary-bg: #2B3990;
+            --secondary-bg: #454FBF;
+            --accent-gold: #F5A623;
+            --text-white: #ffffff;
+            --card-border: #F5A623;
+            --success-green: #22c55e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-white);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .wheel-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--secondary-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+        }
+        
+        .wheel-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .wheel-header h1 {
+            color: var(--accent-gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .wheel-subtitle {
+            color: var(--text-white);
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .chart-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        /* Birth Chart Wheel */
+        .birth-wheel {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 0 auto;
+            border: 4px solid var(--accent-gold);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(43, 57, 144, 0.3) 0%, rgba(69, 79, 191, 0.8) 100%);
+            box-shadow: 0 0 30px rgba(245, 166, 35, 0.3);
+        }
+        
+        /* House divisions */
+        .house-line {
+            position: absolute;
+            width: 2px;
+            height: 250px;
+            background: var(--accent-gold);
+            top: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            opacity: 0.7;
+        }
+        
+        .house-number {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: var(--accent-gold);
+            color: var(--primary-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Zodiac signs */
+        .zodiac-ring {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            top: 50px;
+            left: 50px;
+            border: 1px solid rgba(245, 166, 35, 0.5);
+            border-radius: 50%;
+        }
+        
+        .zodiac-sign {
+            position: absolute;
+            font-size: 12px;
+            color: var(--accent-gold);
+            font-weight: bold;
+            text-align: center;
+            width: 60px;
+            margin-left: -30px;
+        }
+        
+        /* Planets */
+        .planet {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--accent-gold);
+        }
+        
+        .planet:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.5);
+        }
+        
+        /* Planet colors */
+        .planet.sun { background: #FFD700; color: #000; }
+        .planet.moon { background: #E6E6FA; color: #000; }
+        .planet.mercury { background: #FFA500; color: #fff; }
+        .planet.venus { background: #FFB6C1; color: #000; }
+        .planet.mars { background: #FF4500; color: #fff; }
+        .planet.jupiter { background: #4B0082; color: #fff; }
+        .planet.saturn { background: #708090; color: #fff; }
+        .planet.uranus { background: #00CED1; color: #000; }
+        .planet.neptune { background: #4169E1; color: #fff; }
+        .planet.pluto { background: #8B4513; color: #fff; }
+        .planet.rahu { background: #FF6347; color: #fff; }
+        .planet.ketu { background: #32CD32; color: #000; }
+        
+        /* Explanation Panel */
+        .explanation-panel {
+            background: rgba(69, 79, 191, 0.3);
+            border: 1px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .explanation-panel h3 {
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .explanation-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(245, 166, 35, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-gold);
+        }
+        
+        .explanation-item h4 {
+            color: var(--accent-gold);
+            margin-bottom: 5px;
+        }
+        
+        .explanation-item p {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .chart-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .birth-wheel {
+                width: 400px;
+                height: 400px;
+            }
+            
+            .house-line {
+                height: 200px;
+            }
+            
+            .zodiac-ring {
+                width: 320px;
+                height: 320px;
+                top: 40px;
+                left: 40px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .birth-wheel {
+                width: 350px;
+                height: 350px;
+            }
+            
+            .house-line {
+                height: 175px;
+            }
+            
+            .zodiac-ring {
+                width: 280px;
+                height: 280px;
+                top: 35px;
+                left: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wheel-container">
+        <div class="wheel-header">
+            <h1>✨ Birth Chart Wheel</h1>
+            <p class="wheel-subtitle">Your Cosmic Blueprint - Houses, Signs & Planets</p>
+        </div>
+        
+        <div class="chart-layout">
+            <div class="chart-section">
+                <div class="birth-wheel" id="birthWheel">
+                    <!-- Zodiac ring -->
+                    <div class="zodiac-ring" id="zodiacRing"></div>
+                    
+                    <!-- House lines and numbers will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="explanation-panel">
+                <h3>🎯 Understanding Your Birth Chart</h3>
+                
+                <div class="explanation-item">
+                    <h4>The 12 Houses (Numbers 1-12)</h4>
+                    <p><strong>Houses represent different life areas:</strong><br>
+                    1st House: Your personality, appearance, first impressions<br>
+                    2nd House: Money, possessions, values<br>
+                    3rd House: Communication, siblings, short trips<br>
+                    4th House: Home, family, roots<br>
+                    5th House: Love, creativity, children<br>
+                    6th House: Health, work, daily routine<br>
+                    7th House: Marriage, partnerships, relationships<br>
+                    8th House: Transformation, secrets, shared resources<br>
+                    9th House: Higher learning, philosophy, long journeys<br>
+                    10th House: Career, reputation, public image<br>
+                    11th House: Friends, hopes, dreams, social groups<br>
+                    12th House: Spirituality, subconscious, hidden things</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <h4>The 12 Zodiac Signs</h4>
+                    <p><strong>Each house falls in a zodiac sign:</strong><br>
+                    Aries ♈ - Leadership, initiative, courage<br>
+                    Taurus ♉ - Stability, comfort, material security<br>
+                    Gemini ♊ - Communication, curiosity, versatility<br>
+                    Cancer ♋ - Emotions, nurturing, home<br>
+                    Leo ♌ - Creativity, confidence, self-expression<br>
+                    Virgo ♍ - Analysis, service, perfectionism<br>
+                    Libra ♎ - Balance, relationships, beauty<br>
+                    Scorpio ♏ - Intensity, transformation, depth<br>
+                    Sagittarius ♐ - Adventure, philosophy, expansion<br>
+                    Capricorn ♑ - Ambition, structure, responsibility<br>
+                    Aquarius ♒ - Innovation, humanity, uniqueness<br>
+                    Pisces ♓ - Intuition, compassion, spirituality</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <h4>The Planets (Colored Circles)</h4>
+                    <p><strong>Planets show what energies are active:</strong><br>
+                    ☉ Sun (Gold) - Your core self, ego, vitality<br>
+                    ☽ Moon (Silver) - Emotions, instincts, mother<br>
+                    ☿ Mercury (Orange) - Communication, thinking, learning<br>
+                    ♀ Venus (Pink) - Love, beauty, relationships<br>
+                    ♂ Mars (Red) - Energy, action, courage<br>
+                    ♃ Jupiter (Purple) - Wisdom, expansion, luck<br>
+                    ♄ Saturn (Gray) - Discipline, lessons, limitations<br>
+                    ♅ Uranus (Cyan) - Innovation, rebellion, sudden changes<br>
+                    ♆ Neptune (Blue) - Dreams, spirituality, illusions<br>
+                    ♇ Pluto (Brown) - Transformation, power, rebirth<br>
+                    ☊ Rahu (Red-Orange) - Desires, ambitions, karma<br>
+                    ☋ Ketu (Green) - Detachment, spirituality, past life</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <h4>How to Read Your Chart</h4>
+                    <p><strong>Simple 3-step process:</strong><br>
+                    1. <strong>Find a planet:</strong> Look for colored circles<br>
+                    2. <strong>See which house:</strong> Check the number (1-12)<br>
+                    3. <strong>Note the sign:</strong> See which zodiac sign it's in<br><br>
+                    <strong>Example:</strong> If Venus (♀) is in the 7th house in Libra, it means your approach to love and relationships (Venus) is expressed through partnerships (7th house) with a focus on balance and harmony (Libra).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample planetary data for demonstration
+        const samplePlanets = {
+            sun: { sign: 'Leo', degree: 15.5, house: 5, symbol: '☉' },
+            moon: { sign: 'Cancer', degree: 22.3, house: 4, symbol: '☽' },
+            mercury: { sign: 'Virgo', degree: 8.2, house: 6, symbol: '☿' },
+            venus: { sign: 'Libra', degree: 3.7, house: 7, symbol: '♀' },
+            mars: { sign: 'Aries', degree: 28.1, house: 1, symbol: '♂' },
+            jupiter: { sign: 'Sagittarius', degree: 12.9, house: 9, symbol: '♃' },
+            saturn: { sign: 'Capricorn', degree: 19.4, house: 10, symbol: '♄' },
+            rahu: { sign: 'Gemini', degree: 24.7, house: 3, symbol: '☊' },
+            ketu: { sign: 'Sagittarius', degree: 24.7, house: 9, symbol: '☋' }
+        };
+        
+        const zodiacSigns = [
+            { name: 'Aries', symbol: '♈' },
+            { name: 'Taurus', symbol: '♉' },
+            { name: 'Gemini', symbol: '♊' },
+            { name: 'Cancer', symbol: '♋' },
+            { name: 'Leo', symbol: '♌' },
+            { name: 'Virgo', symbol: '♍' },
+            { name: 'Libra', symbol: '♎' },
+            { name: 'Scorpio', symbol: '♏' },
+            { name: 'Sagittarius', symbol: '♐' },
+            { name: 'Capricorn', symbol: '♑' },
+            { name: 'Aquarius', symbol: '♒' },
+            { name: 'Pisces', symbol: '♓' }
+        ];
+        
+        function initializeBirthWheel() {
+            const wheelContainer = document.getElementById('birthWheel');
+            const zodiacRing = document.getElementById('zodiacRing');
+            
+            // Create house lines and numbers
+            for (let i = 1; i <= 12; i++) {
+                // House line
+                const houseLine = document.createElement('div');
+                houseLine.className = 'house-line';
+                houseLine.style.transform = `translateX(-1px) translateY(-100%) rotate(${(i - 1) * 30}deg)`;
+                wheelContainer.appendChild(houseLine);
+                
+                // House number
+                const houseNumber = document.createElement('div');
+                houseNumber.className = 'house-number';
+                houseNumber.textContent = i;
+                const angle = (i - 1) * 30;
+                const radius = 220;
+                const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
+                const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
+                houseNumber.style.left = `calc(50% + ${x}px - 15px)`;
+                houseNumber.style.top = `calc(50% + ${y}px - 15px)`;
+                wheelContainer.appendChild(houseNumber);
+            }
+            
+            // Create zodiac signs
+            zodiacSigns.forEach((sign, index) => {
+                const signElement = document.createElement('div');
+                signElement.className = 'zodiac-sign';
+                signElement.innerHTML = `${sign.symbol}<br>${sign.name}`;
+                const angle = index * 30 + 15; // Center in each 30-degree segment
+                const radius = 160;
+                const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
+                const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
+                signElement.style.left = `calc(50% + ${x}px)`;
+                signElement.style.top = `calc(50% + ${y}px)`;
+                zodiacRing.appendChild(signElement);
+            });
+            
+            // Place planets
+            Object.entries(samplePlanets).forEach(([planetName, data]) => {
+                const planet = document.createElement('div');
+                planet.className = `planet ${planetName}`;
+                planet.textContent = data.symbol;
+                planet.title = `${planetName.charAt(0).toUpperCase() + planetName.slice(1)} in ${data.sign} ${data.degree.toFixed(1)}° (House ${data.house})`;
+                
+                // Calculate position based on sign and degree
+                const signIndex = zodiacSigns.findIndex(sign => sign.name === data.sign);
+                const signAngle = signIndex * 30 + data.degree;
+                const radius = 130;
+                const x = Math.cos((signAngle - 90) * Math.PI / 180) * radius;
+                const y = Math.sin((signAngle - 90) * Math.PI / 180) * radius;
+                
+                planet.style.left = `calc(50% + ${x}px - 12.5px)`;
+                planet.style.top = `calc(50% + ${y}px - 12.5px)`;
+                
+                wheelContainer.appendChild(planet);
+            });
+        }
+        
+        // Initialize the wheel when the page loads
+        window.addEventListener('load', initializeBirthWheel);
+    </script>
+</body>
+</html>

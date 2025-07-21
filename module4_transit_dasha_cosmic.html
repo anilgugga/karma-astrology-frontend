@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Karma Astrology - Transit & Dasha</title>
+    <style>
+        body {
+            background: #2B3990;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #F5A623;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: #454FBF;
+            border: 2px solid #F5A623;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            background: #454FBF;
+            border: 2px solid #F5A623;
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            font-size: 1em;
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        .button {
+            background: #F5A623;
+            color: #2B3990;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .button:hover {
+            background: #E6951A;
+        }
+
+        .output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            color: #ffebcd;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🌌 Karma Astrology: Transit & Dasha Predictions</h1>
+
+<div class="section">
+    <h3>🔭 Transit Prediction</h3>
+    <input type="date" id="transit_date">
+    <input type="time" id="transit_time">
+    <button class="button" onclick="getTransit()">Get Transit</button>
+    <div class="output" id="transit_output"></div>
+</div>
+
+<div class="section">
+    <h3>🪐 Dasha Prediction</h3>
+    <input type="date" id="dasha_birth_date" placeholder="Birth Date">
+    <input type="time" id="dasha_birth_time" placeholder="Birth Time">
+    <button class="button" onclick="getDasha()">Get Dasha</button>
+    <div class="output" id="dasha_output"></div>
+</div>
+
+<div class="footer">Karma Astrology © 2025 | Cosmic Blue & Gold Theme</div>
+
+<script>
+    async function getTransit() {
+        const date = document.getElementById("transit_date").value;
+        const time = document.getElementById("transit_time").value;
+
+        const params = new URLSearchParams();
+        params.append("date", date);
+        params.append("time", time);
+
+        const res = await fetch("http://127.0.0.1:8000/api/transit", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: params
+        });
+
+        const data = await res.json();
+        document.getElementById("transit_output").innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function getDasha() {
+        const birthDate = document.getElementById("dasha_birth_date").value;
+        const birthTime = document.getElementById("dasha_birth_time").value;
+
+        const params = new URLSearchParams();
+        params.append("birth_date", birthDate);
+        params.append("birth_time", birthTime);
+
+        const res = await fetch("http://127.0.0.1:8000/api/dasha", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: params
+        });
+
+        const data = await res.json();
+        document.getElementById("dasha_output").innerText = JSON.stringify(data, null, 2);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,67 @@
+Your Next Session Prompt
+Context:
+I am building Module 5: React + Tailwind Frontend Integration for my Karma Astrology App.
+
+Current Status:
+Backend: Fully ready with:
+
+/api/transit and /api/dasha (real Swiss Ephemeris)
+
+predict_marriage_age_single() using .joblib model
+
+Compatibility logic and AI explanation already in astro_logic.py
+
+Frontend: I want to upgrade from standalone HTML to React + Tailwind using the same cosmic blue & gold theme.
+
+What I Need in the Next Session:
+1️⃣ Complete Frontend Files:
+Please provide full React + Tailwind components ready to use:
+
+Component	Purpose
+TransitDasha.jsx	For Transit & Dasha predictions (calls /api/transit and /api/dasha)
+Compatibility.jsx	For compatibility predictions using AI-enhanced explanation
+MarriageAge.jsx	For marriage age prediction using predict_marriage_age_single
+
+2️⃣ Project Structure & Boilerplate
+Please give me the complete project structure with:
+
+package.json
+
+tailwind.config.js
+
+postcss.config.js
+
+src/index.css
+
+App.jsx
+
+All components pre-built
+
+3️⃣ API Integration
+Each React component must:
+
+Use fetch() or axios to call my backend endpoints
+
+Display the results properly with cosmic blue & gold theme
+
+Include input forms with proper Tailwind styling
+
+4️⃣ Deployment Preparation
+Please guide me on:
+
+How to push this frontend to GitHub
+
+How to deploy to Vercel
+
+How to configure vercel.json to proxy the APIs to my backend
+
+5️⃣ Usage Note
+Please remember:
+
+I am a non-technical beginner, so I need complete files, not code snippets
+
+Provide ready-to-run components and instructions
+
+Use cosmic blue and gold theme consistently
+
+Start the next session exactly from here

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Astrology Calculator - Full Dhana Yoga</title>
+</head>
+<body>
+  <h1>Astrology Calculator Output</h1>
+  <pre id="output" style="white-space: pre-wrap; font-family: monospace; background: #f0f0f0; padding: 1rem;"></pre>
+
+  <script>
+
+(function () {
+  function AstrologyCalculator() {
+    this.EXALTATION_DEGREES = {
+      SUN: { sign: 0, degree: 10 }, // Aries
+      MOON: { sign: 1, degree: 3 }, // Taurus
+      MERCURY: { sign: 5, degree: 15 }, // Virgo
+      VENUS: { sign: 11, degree: 27 }, // Pisces
+      MARS: { sign: 9, degree: 28 }, // Capricorn
+      JUPITER: { sign: 3, degree: 5 }, // Cancer
+      SATURN: { sign: 6, degree: 20 } // Libra
+    };
+
+    this.getOrdinalHouse = function(houseNumber) {
+      const ordinals = {
+        1: '1st', 2: '2nd', 3: '3rd', 4: '4th', 5: '5th', 6: '6th',
+        7: '7th', 8: '8th', 9: '9th', 10: '10th', 11: '11th', 12: '12th'
+      };
+      return ordinals[houseNumber] || houseNumber + 'th';
+    };
+
+    this.calculatePlanetaryDignity = function(planet, longitude) {
+      const signIndex = Math.floor(longitude / 30);
+      const degreeInSign = longitude % 30;
+      const exaltation = this.EXALTATION_DEGREES[planet];
+      if (!exaltation) return { dignity: 'Neutral', strength: 50 };
+      if (exaltation.sign === signIndex) return { dignity: 'Exaltation', strength: 90 };
+      return { dignity: 'Neutral', strength: 50 };
+    };
+
+    this.getPlanetHouse = function(longitude, houseCusps) {
+      for (var i = 0; i < 12; i++) {
+        var current = houseCusps[i];
+        var next = houseCusps[(i + 1) % 12];
+        if (next > current) {
+          if (longitude >= current && longitude < next) return i + 1;
+        } else {
+          if (longitude >= current || longitude < next) return i + 1;
+        }
+      }
+      return 1;
+    };
+
+    this.calculateAspectBetweenPlanets = function(pos1, pos2) {
+      var diff = Math.abs(pos1 - pos2);
+      if (diff > 180) diff = 360 - diff;
+      if (Math.abs(diff - 0) <= 8) return { type: 'Conjunction' };
+      if (Math.abs(diff - 120) <= 6) return { type: 'Trine' };
+      if (Math.abs(diff - 60) <= 4) return { type: 'Sextile' };
+      return null;
+    };
+
+    this.calculateHouseLords = function(houseCusps) {
+      var signRulers = {
+        0: 'MARS', 1: 'VENUS', 2: 'MERCURY', 3: 'MOON',
+        4: 'SUN', 5: 'MERCURY', 6: 'VENUS', 7: 'MARS',
+        8: 'JUPITER', 9: 'SATURN', 10: 'SATURN', 11: 'JUPITER'
+      };
+      var lords = [];
+      for (var i = 0; i < houseCusps.length; i++) {
+        var sign = Math.floor(houseCusps[i] / 30);
+        lords.push(signRulers[sign]);
+      }
+      return lords;
+    };
+
+    this.calculateDhanaYogaStrength = function(p1, p2, aspectType, houses) {
+      var base = 70;
+      if (p1 === 'VENUS' || p1 === 'JUPITER') base += 10;
+      if (p2 === 'VENUS' || p2 === 'JUPITER') base += 10;
+      var aspectBonus = { 'Conjunction': 15, 'Trine': 10, 'Sextile': 5 };
+      base += aspectBonus[aspectType] || 0;
+      var houseBonus = { 2: 10, 11: 8, 5: 6, 9: 5 };
+      for (var i = 0; i < houses.length; i++) base += houseBonus[houses[i]] || 0;
+      return Math.min(100, base);
+    };
+
+    this.detectDhanaYoga = function(planetPositions, houseCusps) {
+      var dhanaYogas = [];
+      var wealthHouses = [2, 5, 9, 11];
+      var kendraHouses = [1, 4, 7, 10];
+      var trikonaHouses = [1, 5, 9];
+      var houseLords = this.calculateHouseLords(houseCusps);
+      var wealthHouseLords = wealthHouses.map(h => houseLords[h - 1]);
+      var strongBenefics = ['VENUS', 'JUPITER'];
+
+      for (var i = 0; i < wealthHouseLords.length; i++) {
+        for (var j = i + 1; j < wealthHouseLords.length; j++) {
+          var lord1 = wealthHouseLords[i];
+          var lord2 = wealthHouseLords[j];
+          if (lord1 && lord2 && planetPositions[lord1] && planetPositions[lord2]) {
+            var aspect = this.calculateAspectBetweenPlanets(
+              planetPositions[lord1].longitude, planetPositions[lord2].longitude
+            );
+            if (aspect && (aspect.type === 'Conjunction' || aspect.type === 'Trine')) {
+              var houses = [wealthHouses[i], wealthHouses[j]];
+              dhanaYogas.push({
+                name: 'Dhana Yoga',
+                type: 'Wealth Lords Connection',
+                strength: this.calculateDhanaYogaStrength(lord1, lord2, aspect.type, houses),
+                description: lord1 + ' (' + this.getOrdinalHouse(houses[0]) + ' lord) and ' +
+                             lord2 + ' (' + this.getOrdinalHouse(houses[1]) + ' lord) form ' + aspect.type,
+                effects: 'Multiple sources of wealth, financial prosperity, good fortune',
+                planets: [lord1, lord2],
+                houses: houses
+              });
+            }
+          }
+        }
+      }
+
+      for (var i = 0; i < strongBenefics.length; i++) {
+        var planet = strongBenefics[i];
+        if (planetPositions[planet]) {
+          var house = this.getPlanetHouse(planetPositions[planet].longitude, houseCusps);
+          if (wealthHouses.includes(house)) {
+            var dignity = this.calculatePlanetaryDignity(planet, planetPositions[planet].longitude);
+            if (dignity.strength > 60) {
+              dhanaYogas.push({
+                name: 'Dhana Yoga',
+                type: 'Benefic in Wealth House',
+                strength: Math.min(90, dignity.strength + 10),
+                description: planet + ' strongly placed in ' + this.getOrdinalHouse(house) + ' house',
+                effects: planet === 'JUPITER'
+                  ? 'Wealth through wisdom, teaching, or spiritual pursuits'
+                  : 'Wealth through beauty, arts, luxury goods, or relationships',
+                planets: [planet],
+                houses: [house]
+              });
+            }
+          }
+        }
+      }
+
+      return dhanaYogas.filter(yoga => yoga.strength > 65);
+    };
+
+    this.processChart = function(swissEphemerisData) {
+      return {
+        dhanaYogas: this.detectDhanaYoga(
+          swissEphemerisData.planetPositions,
+          swissEphemerisData.houseCusps
+        )
+      };
+    };
+  }
+
+  const calculator = new AstrologyCalculator();
+  const swissEphemerisData = {
+    planetPositions: {
+      SUN: { longitude: 45.5 },
+      MOON: { longitude: 120.3 },
+      VENUS: { longitude: 180 },
+      JUPITER: { longitude: 150 },
+      MERCURY: { longitude: 90 },
+      MARS: { longitude: 75 },
+      SATURN: { longitude: 210 }
+    },
+    houseCusps: [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 0],
+    birthDetails: {
+      birthDate: '1990-01-01',
+      latitude: 28.7041,
+      longitude: 77.1025
+    }
+  };
+
+  const result = calculator.processChart(swissEphemerisData);
+  document.getElementById("output").textContent = JSON.stringify(result, null, 2);
+})();
+
+  </script>
+</body>
+</html>

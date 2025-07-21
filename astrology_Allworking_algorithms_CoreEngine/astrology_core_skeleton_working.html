@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Astrology Calculator - Core Components</title>
+</head>
+<body>
+  <h1>Astrology Calculator - Core Components</h1>
+  <pre id="output" style="white-space: pre-wrap; font-family: monospace; background: #f0f0f0; padding: 1rem;"></pre>
+
+  <script>
+    // Core Astrology Calculator Class
+    class AstrologyCalculator {
+      constructor() {
+        this.AYANAMSA_LAHIRI = 'LAHIRI';
+        this.HOUSE_SYSTEMS = {
+          PLACIDUS: 'P',
+          KOCH: 'K',
+          EQUAL: 'E',
+          WHOLE_SIGN: 'W'
+        };
+        
+        // Zodiac signs data
+        this.ZODIAC_SIGNS = [
+          { name: 'Aries', symbol: '♈', element: 'Fire', quality: 'Cardinal', ruler: 'Mars' },
+          { name: 'Taurus', symbol: '♉', element: 'Earth', quality: 'Fixed', ruler: 'Venus' },
+          { name: 'Gemini', symbol: '♊', element: 'Air', quality: 'Mutable', ruler: 'Mercury' },
+          { name: 'Cancer', symbol: '♋', element: 'Water', quality: 'Cardinal', ruler: 'Moon' },
+          { name: 'Leo', symbol: '♌', element: 'Fire', quality: 'Fixed', ruler: 'Sun' },
+          { name: 'Virgo', symbol: '♍', element: 'Earth', quality: 'Mutable', ruler: 'Mercury' },
+          { name: 'Libra', symbol: '♎', element: 'Air', quality: 'Cardinal', ruler: 'Venus' },
+          { name: 'Scorpio', symbol: '♏', element: 'Water', quality: 'Fixed', ruler: 'Mars' },
+          { name: 'Sagittarius', symbol: '♐', element: 'Fire', quality: 'Mutable', ruler: 'Jupiter' },
+          { name: 'Capricorn', symbol: '♑', element: 'Earth', quality: 'Cardinal', ruler: 'Saturn' },
+          { name: 'Aquarius', symbol: '♒', element: 'Air', quality: 'Fixed', ruler: 'Saturn' },
+          { name: 'Pisces', symbol: '♓', element: 'Water', quality: 'Mutable', ruler: 'Jupiter' }
+        ];
+
+        // Planetary data
+        this.PLANETS = {
+          SUN: { name: 'Sun', symbol: '☉', nature: 'Benefic', element: 'Fire' },
+          MOON: { name: 'Moon', symbol: '☽', nature: 'Benefic', element: 'Water' },
+          MERCURY: { name: 'Mercury', symbol: '☿', nature: 'Neutral', element: 'Earth' },
+          VENUS: { name: 'Venus', symbol: '♀', nature: 'Benefic', element: 'Water' },
+          MARS: { name: 'Mars', symbol: '♂', nature: 'Malefic', element: 'Fire' },
+          JUPITER: { name: 'Jupiter', symbol: '♃', nature: 'Benefic', element: 'Air' },
+          SATURN: { name: 'Saturn', symbol: '♄', nature: 'Malefic', element: 'Earth' },
+          RAHU: { name: 'Rahu', symbol: '☊', nature: 'Malefic', element: 'Air' },
+          KETU: { name: 'Ketu', symbol: '☋', nature: 'Malefic', element: 'Fire' }
+        };
+
+        // Exaltation and debilitation degrees
+        this.EXALTATION_DEGREES = {
+          SUN: { sign: 0, degree: 10 },
+          MOON: { sign: 1, degree: 3 },
+          MERCURY: { sign: 5, degree: 15 },
+          VENUS: { sign: 11, degree: 27 },
+          MARS: { sign: 9, degree: 28 },
+          JUPITER: { sign: 3, degree: 5 },
+          SATURN: { sign: 6, degree: 20 }
+        };
+
+        // Aspect orbs (in degrees)
+        this.ASPECT_ORBS = {
+          CONJUNCTION: 8,
+          OPPOSITION: 8,
+          TRINE: 6,
+          SQUARE: 6,
+          SEXTILE: 4,
+          QUINCUNX: 3
+        };
+      }
+
+      // Convert decimal degrees to degrees, minutes, seconds
+      decimalToDMS(decimal) {
+        const degrees = Math.floor(decimal);
+        const minutes = Math.floor((decimal - degrees) * 60);
+        const seconds = Math.round(((decimal - degrees) * 60 - minutes) * 60);
+        
+        return {
+          degrees,
+          minutes,
+          seconds,
+          formatted: `${degrees}°${minutes}'${seconds}"`
+        };
+      }
+
+      // Convert degrees to zodiac sign and position
+      degreesToZodiacPosition(longitude) {
+        const signIndex = Math.floor(longitude / 30);
+        const degreeInSign = longitude % 30;
+        
+        return {
+          sign: this.ZODIAC_SIGNS[signIndex],
+          signIndex,
+          degreeInSign,
+          dms: this.decimalToDMS(degreeInSign),
+          formatted: `${this.ZODIAC_SIGNS[signIndex].symbol} ${this.decimalToDMS(degreeInSign).formatted}`
+        };
+      }
+
+      // Test basic functionality
+      testBasicFunctions() {
+        console.log('Testing basic functions...');
+        
+        // Test DMS conversion
+        const dms = this.decimalToDMS(23.456);
+        console.log('DMS Test:', dms);
+        
+        // Test zodiac position
+        const zodiacPos = this.degreesToZodiacPosition(45.5);
+        console.log('Zodiac Position Test:', zodiacPos);
+        
+        return {
+          dmsTest: dms,
+          zodiacTest: zodiacPos,
+          planetsData: this.PLANETS,
+          signsData: this.ZODIAC_SIGNS
+        };
+      }
+    }
+
+    // Test the core functionality
+    const calculator = new AstrologyCalculator();
+    const testResults = calculator.testBasicFunctions();
+    
+    document.getElementById('output').textContent = JSON.stringify(testResults, null, 2);
+    
+    // Make calculator available globally for next parts
+    window.AstrologyCalculator = AstrologyCalculator;
+  </script>
+</body>
+</html>

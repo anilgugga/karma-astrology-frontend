@@ -1,0 +1,553 @@
+import React, { useState, useRef, useEffect } from 'react';
+
+// ===============================================
+// CHART GENERATION LOGIC - VISUAL RENDERING ENGINE
+// ===============================================
+// This module creates interactive birth chart visualizations
+// Integrates with AstrologyCalculator for data processing
+// ===============================================
+
+const ChartGenerationEngine = () => {
+  const [chartData, setChartData] = useState(null);
+  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [showAspects, setShowAspects] = useState(true);
+  const [chartType, setChartType] = useState('north_indian');
+  const canvasRef = useRef(null);
+
+  // Chart configuration
+  const CHART_CONFIG = {
+    canvas: {
+      width: 600,
+      height: 600,
+      centerX: 300,
+      centerY: 300
+    },
+    circles: {
+      outer: 280,
+      inner: 200,
+      houses: 240,
+      planets: 220
+    },
+    colors: {
+      background: '#0f172a',
+      circle: '#334155',
+      houses: '#475569',
+      planets: {
+        SUN: '#fbbf24',
+        MOON: '#e5e7eb',
+        MERCURY: '#10b981',
+        VENUS: '#f472b6',
+        MARS: '#ef4444',
+        JUPITER: '#3b82f6',
+        SATURN: '#6366f1',
+        RAHU: '#8b5cf6',
+        KETU: '#f59e0b'
+      },
+      aspects: {
+        conjunction: '#10b981',
+        opposition: '#ef4444',
+        trine: '#3b82f6',
+        square: '#f59e0b',
+        sextile: '#06b6d4',
+        quincunx: '#8b5cf6'
+      },
+      text: '#f8fafc',
+      highlight: '#fbbf24'
+    },
+    fonts: {
+      planet: '14px Arial, sans-serif',
+      house: '12px Arial, sans-serif',
+      degree: '10px Arial, sans-serif'
+    }
+  };
+
+  // Sample chart data for demonstration
+  const sampleChartData = {
+    planetPositions: {
+      SUN: { 
+        longitude: 45.5, 
+        zodiacPosition: { sign: { name: 'Taurus', symbol: '♉' }, degreeInSign: 15.5 },
+        house: 1,
+        dignity: { dignity: 'Neutral', strength: 50 }
+      },
+      MOON: { 
+        longitude: 120.3, 
+        zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 0.3 },
+        house: 4,
+        dignity: { dignity: 'Own Sign', strength: 100 }
+      },
+      MERCURY: { 
+        longitude: 200.7, 
+        zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 20.7 },
+        house: 7,
+        dignity: { dignity: 'Neutral', strength: 50 }
+      },
+      VENUS: { 
+        longitude: 330.2, 
+        zodiacPosition: { sign: { name: 'Pisces', symbol: '♓' }, degreeInSign: 0.2 },
+        house: 11,
+        dignity: { dignity: 'Exaltation', strength: 95 }
+      },
+      MARS: { 
+        longitude: 280.8, 
+        zodiacPosition: { sign: { name: 'Capricorn', symbol: '♑' }, degreeInSign: 10.8 },
+        house: 9,
+        dignity: { dignity: 'Exaltation', strength: 88 }
+      },
+      JUPITER: { 
+        longitude: 95.4, 
+        zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 5.4 },
+        house: 3,
+        dignity: { dignity: 'Exaltation', strength: 92 }
+      },
+      SATURN: { 
+        longitude: 185.6, 
+        zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 5.6 },
+        house: 6,
+        dignity: { dignity: 'Exaltation', strength: 85 }
+      },
+      RAHU: { 
+        longitude: 75.9, 
+        zodiacPosition: { sign: { name: 'Gemini', symbol: '♊' }, degreeInSign: 15.9 },
+        house: 2,
+        dignity: { dignity: 'Neutral', strength: 50 }
+      },
+      KETU: { 
+        longitude: 255.9, 
+        zodiacPosition: { sign: { name: 'Sagittarius', symbol: '♐' }, degreeInSign: 15.9 },
+        house: 8,
+        dignity: { dignity: 'Neutral', strength: 50 }
+      }
+    },
+    aspects: [
+      { planet1: 'SUN', planet2: 'MOON', aspect: 'Trine', orb: 2.3, influence: { strength: 0.8, nature: 'Harmonious' } },
+      { planet1: 'VENUS', planet2: 'JUPITER', aspect: 'Square', orb: 4.1, influence: { strength: 0.6, nature: 'Challenging' } },
+      { planet1: 'MARS', planet2: 'SATURN', aspect: 'Opposition', orb: 1.8, influence: { strength: 0.9, nature: 'Challenging' } }
+    ],
+    houses: [
+      { house: 1, cusp: 0, sign: { name: 'Aries', symbol: '♈' } },
+      { house: 2, cusp: 30, sign: { name: 'Taurus', symbol: '♉' } },
+      { house: 3, cusp: 60, sign: { name: 'Gemini', symbol: '♊' } },
+      { house: 4, cusp: 90, sign: { name: 'Cancer', symbol: '♋' } },
+      { house: 5, cusp: 120, sign: { name: 'Leo', symbol: '♌' } },
+      { house: 6, cusp: 150, sign: { name: 'Virgo', symbol: '♍' } },
+      { house: 7, cusp: 180, sign: { name: 'Libra', symbol: '♎' } },
+      { house: 8, cusp: 210, sign: { name: 'Scorpio', symbol: '♏' } },
+      { house: 9, cusp: 240, sign: { name: 'Sagittarius', symbol: '♐' } },
+      { house: 10, cusp: 270, sign: { name: 'Capricorn', symbol: '♑' } },
+      { house: 11, cusp: 300, sign: { name: 'Aquarius', symbol: '♒' } },
+      { house: 12, cusp: 330, sign: { name: 'Pisces', symbol: '♓' } }
+    ]
+  };
+
+  // Initialize with sample data
+  useEffect(() => {
+    setChartData(sampleChartData);
+  }, []);
+
+  // ===============================================
+  // CHART DRAWING METHODS
+  // ===============================================
+
+  /**
+   * Convert longitude to canvas coordinates
+   */
+  const longitudeToCanvas = (longitude, radius) => {
+    const angle = (longitude - 90) * (Math.PI / 180); // Adjust for 0° = East
+    const x = CHART_CONFIG.canvas.centerX + radius * Math.cos(angle);
+    const y = CHART_CONFIG.canvas.centerY + radius * Math.sin(angle);
+    return { x, y };
+  };
+
+  /**
+   * Draw the outer circle and house divisions
+   */
+  const drawChartFrame = (ctx) => {
+    const { centerX, centerY } = CHART_CONFIG.canvas;
+    const { outer, inner, houses } = CHART_CONFIG.circles;
+
+    // Clear canvas
+    ctx.fillStyle = CHART_CONFIG.colors.background;
+    ctx.fillRect(0, 0, CHART_CONFIG.canvas.width, CHART_CONFIG.canvas.height);
+
+    // Draw outer circle
+    ctx.strokeStyle = CHART_CONFIG.colors.circle;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outer, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Draw inner circle
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, inner, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Draw house divisions
+    ctx.strokeStyle = CHART_CONFIG.colors.houses;
+    ctx.lineWidth = 1;
+    
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * 30 - 90) * (Math.PI / 180);
+      const innerPoint = {
+        x: centerX + inner * Math.cos(angle),
+        y: centerY + inner * Math.sin(angle)
+      };
+      const outerPoint = {
+        x: centerX + outer * Math.cos(angle),
+        y: centerY + outer * Math.sin(angle)
+      };
+      
+      ctx.beginPath();
+      ctx.moveTo(innerPoint.x, innerPoint.y);
+      ctx.lineTo(outerPoint.x, outerPoint.y);
+      ctx.stroke();
+    }
+  };
+
+  /**
+   * Draw zodiac signs
+   */
+  const drawZodiacSigns = (ctx) => {
+    if (!chartData?.houses) return;
+
+    ctx.fillStyle = CHART_CONFIG.colors.text;
+    ctx.font = CHART_CONFIG.fonts.house;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    chartData.houses.forEach((house, index) => {
+      const angle = (index * 30 - 75) * (Math.PI / 180); // Center of house
+      const radius = (CHART_CONFIG.circles.outer + CHART_CONFIG.circles.houses) / 2;
+      const pos = longitudeToCanvas(index * 30 + 15, radius);
+      
+      // Draw zodiac symbol
+      ctx.fillText(house.sign.symbol, pos.x, pos.y - 10);
+      
+      // Draw house number
+      ctx.font = '10px Arial, sans-serif';
+      ctx.fillText(house.house.toString(), pos.x, pos.y + 8);
+      ctx.font = CHART_CONFIG.fonts.house;
+    });
+  };
+
+  /**
+   * Draw planets
+   */
+  const drawPlanets = (ctx) => {
+    if (!chartData?.planetPositions) return;
+
+    Object.entries(chartData.planetPositions).forEach(([planet, data]) => {
+      const pos = longitudeToCanvas(data.longitude, CHART_CONFIG.circles.planets);
+      
+      // Planet background circle
+      ctx.fillStyle = CHART_CONFIG.colors.planets[planet] || '#ffffff';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 12, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Planet symbol
+      ctx.fillStyle = '#000000';
+      ctx.font = CHART_CONFIG.fonts.planet;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const symbols = {
+        SUN: '☉', MOON: '☽', MERCURY: '☿', VENUS: '♀', MARS: '♂',
+        JUPITER: '♃', SATURN: '♄', RAHU: '☊', KETU: '☋'
+      };
+      
+      ctx.fillText(symbols[planet] || planet.charAt(0), pos.x, pos.y);
+
+      // Highlight selected planet
+      if (selectedPlanet === planet) {
+        ctx.strokeStyle = CHART_CONFIG.colors.highlight;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 15, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+
+      // Draw degree information
+      ctx.fillStyle = CHART_CONFIG.colors.text;
+      ctx.font = CHART_CONFIG.fonts.degree;
+      const degree = Math.floor(data.zodiacPosition.degreeInSign);
+      ctx.fillText(`${degree}°`, pos.x, pos.y + 25);
+    });
+  };
+
+  /**
+   * Draw aspects between planets
+   */
+  const drawAspects = (ctx) => {
+    if (!showAspects || !chartData?.aspects) return;
+
+    chartData.aspects.forEach(aspect => {
+      const planet1Data = chartData.planetPositions[aspect.planet1];
+      const planet2Data = chartData.planetPositions[aspect.planet2];
+      
+      if (!planet1Data || !planet2Data) return;
+
+      const pos1 = longitudeToCanvas(planet1Data.longitude, CHART_CONFIG.circles.planets);
+      const pos2 = longitudeToCanvas(planet2Data.longitude, CHART_CONFIG.circles.planets);
+
+      // Set aspect color and style
+      const aspectColor = CHART_CONFIG.colors.aspects[aspect.aspect.toLowerCase()] || '#888888';
+      ctx.strokeStyle = aspectColor;
+      ctx.lineWidth = aspect.influence.nature === 'Harmonious' ? 2 : 1;
+      ctx.setLineDash(aspect.influence.nature === 'Challenging' ? [5, 5] : []);
+
+      // Draw aspect line
+      ctx.beginPath();
+      ctx.moveTo(pos1.x, pos1.y);
+      ctx.lineTo(pos2.x, pos2.y);
+      ctx.stroke();
+      
+      // Reset line dash
+      ctx.setLineDash([]);
+    });
+  };
+
+  /**
+   * Main chart rendering function
+   */
+  const renderChart = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !chartData) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Clear and draw chart components
+    drawChartFrame(ctx);
+    drawZodiacSigns(ctx);
+    if (showAspects) drawAspects(ctx);
+    drawPlanets(ctx);
+  };
+
+  /**
+   * Handle planet click
+   */
+  const handleCanvasClick = (event) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !chartData) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // Check if click is near any planet
+    Object.entries(chartData.planetPositions).forEach(([planet, data]) => {
+      const pos = longitudeToCanvas(data.longitude, CHART_CONFIG.circles.planets);
+      const distance = Math.sqrt((clickX - pos.x) ** 2 + (clickY - pos.y) ** 2);
+      
+      if (distance <= 15) {
+        setSelectedPlanet(selectedPlanet === planet ? null : planet);
+      }
+    });
+  };
+
+  // Re-render chart when data changes
+  useEffect(() => {
+    renderChart();
+  }, [chartData, selectedPlanet, showAspects]);
+
+  // ===============================================
+  // CHART ANALYSIS COMPONENTS
+  // ===============================================
+
+  const PlanetaryStrengthMeter = ({ planet, strength, dignity }) => (
+    <div className="bg-slate-700 p-3 rounded-lg">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-medium text-white">{planet}</span>
+        <span className="text-xs text-gray-300">{dignity}</span>
+      </div>
+      <div className="w-full bg-slate-600 rounded-full h-2">
+        <div 
+          className={`h-2 rounded-full ${strength >= 80 ? 'bg-green-500' : strength >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+          style={{ width: `${strength}%` }}
+        />
+      </div>
+      <div className="text-xs text-gray-400 mt-1">{strength}% strength</div>
+    </div>
+  );
+
+  const AspectsList = ({ aspects }) => (
+    <div className="space-y-2">
+      {aspects.map((aspect, index) => (
+        <div key={index} className="bg-slate-700 p-3 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-white">
+              {aspect.planet1} {aspect.aspect} {aspect.planet2}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded ${
+              aspect.influence.nature === 'Harmonious' ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+            }`}>
+              {aspect.influence.nature}
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mt-1">
+            Orb: {aspect.orb.toFixed(1)}° | Strength: {(aspect.influence.strength * 100).toFixed(0)}%
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const HousesTable = ({ houses, planetPositions }) => (
+    <div className="space-y-1">
+      {houses.map(house => {
+        const planetsInHouse = Object.entries(planetPositions).filter(
+          ([_, data]) => data.house === house.house
+        );
+        
+        return (
+          <div key={house.house} className="bg-slate-700 p-2 rounded flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-white">House {house.house}</span>
+              <span className="text-lg">{house.sign.symbol}</span>
+              <span className="text-xs text-gray-400">{house.sign.name}</span>
+            </div>
+            <div className="flex space-x-1">
+              {planetsInHouse.map(([planet]) => (
+                <span key={planet} className="text-xs bg-slate-600 px-2 py-1 rounded text-white">
+                  {planet}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // ===============================================
+  // MAIN COMPONENT RENDER
+  // ===============================================
+
+  return (
+    <div className="bg-slate-900 min-h-screen p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-6">Birth Chart Analysis</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chart Canvas */}
+          <div className="lg:col-span-2">
+            <div className="bg-slate-800 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-white">Birth Chart</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowAspects(!showAspects)}
+                    className={`px-3 py-1 rounded text-sm ${
+                      showAspects ? 'bg-blue-600 text-white' : 'bg-slate-600 text-gray-300'
+                    }`}
+                  >
+                    Aspects
+                  </button>
+                  <select
+                    value={chartType}
+                    onChange={(e) => setChartType(e.target.value)}
+                    className="bg-slate-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    <option value="north_indian">North Indian</option>
+                    <option value="south_indian">South Indian</option>
+                    <option value="western">Western</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <canvas
+                  ref={canvasRef}
+                  width={CHART_CONFIG.canvas.width}
+                  height={CHART_CONFIG.canvas.height}
+                  onClick={handleCanvasClick}
+                  className="border border-slate-600 rounded-lg cursor-pointer"
+                />
+              </div>
+              
+              {selectedPlanet && (
+                <div className="mt-4 bg-slate-700 p-4 rounded-lg">
+                  <h3 className="font-semibold text-white mb-2">{selectedPlanet} Details</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-400">Position:</span>
+                      <span className="text-white ml-2">
+                        {chartData.planetPositions[selectedPlanet].zodiacPosition.sign.name} {' '}
+                        {Math.floor(chartData.planetPositions[selectedPlanet].zodiacPosition.degreeInSign)}°
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">House:</span>
+                      <span className="text-white ml-2">
+                        {chartData.planetPositions[selectedPlanet].house}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Dignity:</span>
+                      <span className="text-white ml-2">
+                        {chartData.planetPositions[selectedPlanet].dignity.dignity}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Strength:</span>
+                      <span className="text-white ml-2">
+                        {chartData.planetPositions[selectedPlanet].dignity.strength}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Analysis Panel */}
+          <div className="space-y-6">
+            {/* Planetary Strengths */}
+            <div className="bg-slate-800 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-4">Planetary Strengths</h3>
+              <div className="space-y-3">
+                {chartData && Object.entries(chartData.planetPositions).map(([planet, data]) => (
+                  <PlanetaryStrengthMeter
+                    key={planet}
+                    planet={planet}
+                    strength={data.dignity.strength}
+                    dignity={data.dignity.dignity}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Aspects */}
+            <div className="bg-slate-800 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-4">Major Aspects</h3>
+              {chartData && <AspectsList aspects={chartData.aspects} />}
+            </div>
+
+            {/* Houses */}
+            <div className="bg-slate-800 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-white mb-4">Houses</h3>
+              {chartData && (
+                <HousesTable houses={chartData.houses} planetPositions={chartData.planetPositions} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Chart Actions */}
+        <div className="mt-6 flex justify-center space-x-4">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+            Generate Report
+          </button>
+          <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+            Export Chart
+          </button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">
+            Share Chart
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChartGenerationEngine;

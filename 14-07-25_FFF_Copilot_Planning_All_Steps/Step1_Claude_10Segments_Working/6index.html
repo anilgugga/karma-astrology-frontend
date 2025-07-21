@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Core Chart System - Advanced data visualization and charting platform">
+    <meta name="keywords" content="charts, data visualization, javascript, react, interactive charts">
+    <meta name="author" content="Core Chart System">
+    <title>Core Chart System - Advanced Data Visualization</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M7 12l4-4 4 4 4-4'/%3E%3C/svg%3E">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" as="script">
+    
+    <!-- CSS Framework - Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'chart-primary': '#007bff',
+                        'chart-secondary': '#6c757d',
+                        'chart-success': '#28a745',
+                        'chart-danger': '#dc3545',
+                        'chart-warning': '#ffc107',
+                        'chart-info': '#17a2b8',
+                        'chart-light': '#f8f9fa',
+                        'chart-dark': '#343a40',
+                        'chart-bg': '#ffffff',
+                        'chart-surface': '#f8f9fa',
+                        'chart-border': '#e9ecef'
+                    },
+                    fontFamily: {
+                        'chart': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 3s linear infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS for enhanced styling -->
+    <style>
+        /* Global Styles */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #333333;
+            line-height: 1.6;
+        }
+        
+        /* Root Container */
+        #root {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Initial Loading Screen */
+        .initial-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .initial-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            stroke: #007bff;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            color: #6c757d;
+            margin-top: 20px;
+        }
+        
+        /* Error Boundary Styles */
+        .error-boundary {
+            padding: 40px;
+            text-align: center;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            margin: 20px;
+        }
+        
+        .error-boundary h2 {
+            color: #721c24;
+            margin-bottom: 20px;
+        }
+        
+        .error-boundary p {
+            color: #721c24;
+            margin-bottom: 20px;
+        }
+        
+        .error-boundary button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .error-boundary button:hover {
+            background: #c82333;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .loading-logo {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .loading-text {
+                font-size: 16px;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .initial-loading {
+                display: none;
+            }
+            
+            body {
+                background: white;
+            }
+        }
+        
+        /* High Contrast Mode */
+        @media (prefers-contrast: high) {
+            body {
+                background: #ffffff;
+                color: #000000;
+            }
+            
+            .loading-spinner {
+                border-color: #000000;
+                border-top-color: #ffffff;
+            }
+        }
+        
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a;
+                color: #ffffff;
+            }
+            
+            .initial-loading {
+                background: #1a1a1a;
+            }
+            
+            .loading-logo {
+                stroke: #61dafb;
+            }
+            
+            .loading-text {
+                color: #cccccc;
+            }
+        }
+        
+        /* Accessibility Improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        /* Focus visible for keyboard navigation */
+        .focus-visible {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Selection styling */
+        ::selection {
+            background: #007bff;
+            color: white;
+        }
+        
+        ::-moz-selection {
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="sr-only focus-visible">Skip to main content</a>
+    
+    <!-- Initial Loading Screen -->
+    <div id="initial-loading" class="initial-loading" role="status" aria-live="polite">
+        <svg class="loading-logo" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3v18h18"></path>
+            <path d="M7 12l4-4 4 4 4-4"></path>
+        </svg>
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div class="loading-text">Loading Core Chart System...</div>
+        <span class="sr-only">Application is loading, please wait</span>
+    </div>
+    
+    <!-- Root Container for React Application -->
+    <div id="root" role="main" aria-label="Core Chart System Application">
+        <!-- React application will be mounted here -->
+        <noscript>
+            <div class="error-boundary">
+                <h2>JavaScript Required</h2>
+                <p>This application requires JavaScript to function properly. Please enable JavaScript in your browser settings and refresh the page.</p>
+            </div>
+        </noscript>
+    </div>
+    
+    <!-- Error Boundary Fallback (will be replaced by React) -->
+    <div id="error-fallback" class="error-boundary" style="display: none;">
+        <h2>Something went wrong</h2>
+        <p>We're sorry, but something unexpected happened. Please try refreshing the page.</p>
+        <button onclick="location.reload()">Refresh Page</button>
+    </div>
+    
+    <!-- Core JavaScript Libraries -->
+    <!-- React -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX transformation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    
+    <!-- Chart.js for chart rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- D3.js for advanced data manipulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    
+    <!-- Lodash for utility functions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script type="text/babel" src="./data-processor.js"></script>
+    <script type="text/babel" src="./chart-renderer.js"></script>
+    <script type="text/babel" src="./config-manager.js"></script>
+    <script type="text/babel" src="./interaction-handler.js"></script>
+    <script type="text/babel" src="./main-app.js"></script>
+    
+    <!-- Application Bootstrap -->
+    <script type="text/babel">
+        // Error Boundary Component
+        class ErrorBoundary extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null, errorInfo: null };
+            }
+            
+            static getDerivedStateFromError(error) {
+                return { hasError: true };
+            }
+            
+            componentDidCatch(error, errorInfo) {
+                this.setState({
+                    error: error,
+                    errorInfo: errorInfo
+                });
+                
+                // Log error to console in development
+                console.error('Error caught by boundary:', error, errorInfo);
+            }
+            
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="error-boundary">
+                            <h2>Something went wrong</h2>
+                            <p>We're sorry, but something unexpected happened.</p>
+                            <details style={{ whiteSpace: 'pre-wrap', marginTop: '20px' }}>
+                                {this.state.error && this.state.error.toString()}
+                                <br />
+                                {this.state.errorInfo.componentStack}
+                            </details>
+                            <button onClick={() => window.location.reload()}>
+                                Refresh Page
+                            </button>
+                        </div>
+                    );
+                }
+                
+                return this.props.children;
+            }
+        }
+        
+        // App initialization
+        const initializeApp = () => {
+            try {
+                // Hide loading screen
+                const loadingScreen = document.getElementById('initial-loading');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 300);
+                }
+                
+                // Get root container
+                const rootElement = document.getElementById('root');
+                if (!rootElement) {
+                    throw new Error('Root element not found');
+                }
+                
+                // Create React root and render application
+                const root = ReactDOM.createRoot(rootElement);
+                root.render(
+                    <ErrorBoundary>
+                        <MainApp />
+                    </ErrorBoundary>
+                );
+                
+                // Set up global error handlers
+                window.addEventListener('error', (event) => {
+                    console.error('Global error:', event.error);
+                });
+                
+                window.addEventListener('unhandledrejection', (event) => {
+                    console.error('Unhandled promise rejection:', event.reason);
+                });
+                
+                // Performance monitoring
+                if (typeof performance !== 'undefined' && performance.mark) {
+                    performance.mark('app-initialized');
+                }
+                
+            } catch (error) {
+                console.error('Failed to initialize application:', error);
+                
+                // Show error fallback
+                const errorFallback = document.getElementById('error-fallback');
+                const loadingScreen = document.getElementById('initial-loading');
+                
+                if (loadingScreen) {
+                    loadingScreen.style.display = 'none';
+                }
+                
+                if (errorFallback) {
+                    errorFallback.style.display = 'block';
+                }
+            }
+        };
+        
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        
+        // Service Worker Registration (for PWA support)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- Analytics and Monitoring (placeholder) -->
+    <script>
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            if (typeof performance !== 'undefined' && performance.getEntriesByType) {
+                const navigationTiming = performance.getEntriesByType('navigation')[0];
+                if (navigationTiming) {
+                    console.log('Page load time:', navigationTiming.loadEventEnd - navigationTiming.fetchStart, 'ms');
+                }
+            }
+        });
+        
+        // Memory usage monitoring (development only)
+        if (typeof performance !== 'undefined' && performance.memory) {
+            setInterval(() => {
+                const memory = performance.memory;
+                console.log('Memory usage:', {
+                    used: Math.round(memory.usedJSHeapSize / 1048576) + ' MB',
+                    total: Math.round(memory.totalJSHeapSize / 1048576) + ' MB',
+                    limit: Math.round(memory.jsHeapSizeLimit / 1048576) + ' MB'
+                });
+            }, 30000); // Log every 30 seconds
+        }
+    </script>
+</body>
+</html>

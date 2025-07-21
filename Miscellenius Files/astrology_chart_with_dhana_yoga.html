@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Astrology Chart with Dhana Yoga</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-4">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    class AstrologyCalculator {
+      constructor() {
+        this.ZODIAC_SIGNS = [
+          { name: 'Aries', symbol: '♈' }, { name: 'Taurus', symbol: '♉' },
+          { name: 'Gemini', symbol: '♊' }, { name: 'Cancer', symbol: '♋' },
+          { name: 'Leo', symbol: '♌' }, { name: 'Virgo', symbol: '♍' },
+          { name: 'Libra', symbol: '♎' }, { name: 'Scorpio', symbol: '♏' },
+          { name: 'Sagittarius', symbol: '♐' }, { name: 'Capricorn', symbol: '♑' },
+          { name: 'Aquarius', symbol: '♒' }, { name: 'Pisces', symbol: '♓' }
+        ];
+        this.EXALTATION_DEGREES = {
+          SUN: { sign: 0, degree: 10 }, MOON: { sign: 1, degree: 3 },
+          MERCURY: { sign: 5, degree: 15 }, VENUS: { sign: 11, degree: 27 },
+          MARS: { sign: 9, degree: 28 }, JUPITER: { sign: 3, degree: 5 },
+          SATURN: { sign: 6, degree: 20 }
+        };
+      }
+
+      degreesToZodiacPosition(longitude) {
+        const signIndex = Math.floor(longitude / 30);
+        const degreeInSign = longitude % 30;
+        return {
+          sign: this.ZODIAC_SIGNS[signIndex],
+          degree: degreeInSign.toFixed(2)
+        };
+      }
+
+      getPlanetHouse(longitude, houseCusps) {
+        for (let i = 0; i < 12; i++) {
+          const start = houseCusps[i];
+          const end = houseCusps[(i + 1) % 12];
+          if (start < end && longitude >= start && longitude < end) return i + 1;
+          if (start > end && (longitude >= start || longitude < end)) return i + 1;
+        }
+        return 1;
+      }
+
+      calculatePlanetaryDignity(planet, longitude) {
+        const sign = Math.floor(longitude / 30);
+        const deg = longitude % 30;
+        const exalt = this.EXALTATION_DEGREES[planet];
+        if (exalt && exalt.sign === sign && Math.abs(deg - exalt.degree) < 5) {
+          return { dignity: 'Exalted', strength: 90 };
+        }
+        return { dignity: 'Neutral', strength: 50 };
+      }
+
+      calculateHouseLords(houseCusps) {
+        const signRulers = {
+          0: 'MARS', 1: 'VENUS', 2: 'MERCURY', 3: 'MOON',
+          4: 'SUN', 5: 'MERCURY', 6: 'VENUS', 7: 'MARS',
+          8: 'JUPITER', 9: 'SATURN', 10: 'SATURN', 11: 'JUPITER'
+        };
+        return houseCusps.map(cusp => signRulers[Math.floor(cusp / 30)]);
+      }
+
+      getOrdinalHouse(house) {
+        const ordinals = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'];
+        return ordinals[house - 1] || house + 'th';
+      }
+
+      detectDhanaYoga(planetPositions, houseCusps) {
+        const yogas = [];
+        const wealthHouses = [2, 5, 9, 11];
+        const strongBenefics = ['VENUS', 'JUPITER'];
+
+        for (let planet of strongBenefics) {
+          if (planetPositions[planet]) {
+            const house = this.getPlanetHouse(planetPositions[planet].longitude, houseCusps);
+            if (wealthHouses.includes(house)) {
+              const dignity = this.calculatePlanetaryDignity(planet, planetPositions[planet].longitude);
+              if (dignity.strength > 60) {
+                yogas.push({
+                  name: 'Dhana Yoga',
+                  description: \`\${planet} in the \${this.getOrdinalHouse(house)} house (wealth).\`,
+                  effects: 'Wealth and prosperity'
+                });
+              }
+            }
+          }
+        }
+
+        return yogas;
+      }
+
+      processChart({ planetPositions, houseCusps, birthDetails }) {
+        const planets = {};
+        for (let [planet, data] of Object.entries(planetPositions)) {
+          planets[planet] = {
+            longitude: data.longitude,
+            position: this.degreesToZodiacPosition(data.longitude),
+            house: this.getPlanetHouse(data.longitude, houseCusps),
+            dignity: this.calculatePlanetaryDignity(planet, data.longitude)
+          };
+        }
+
+        const dhanaYogas = this.detectDhanaYoga(planetPositions, houseCusps);
+
+        return {
+          birthDetails,
+          planets,
+          dhanaYogas,
+          timestamp: new Date().toISOString()
+        };
+      }
+    }
+
+    function App() {
+      const [birthDate, setBirthDate] = useState("1990-01-01");
+      const [birthTime, setBirthTime] = useState("12:00");
+      const [latitude, setLatitude] = useState("28.7041");
+      const [longitude, setLongitude] = useState("77.1025");
+      const [output, setOutput] = useState(null);
+
+      const handleCalculate = () => {
+        const calculator = new AstrologyCalculator();
+        const planetPositions = {
+          SUN: { longitude: 45.5 },
+          MOON: { longitude: 120.3 },
+          VENUS: { longitude: 180 },
+          JUPITER: { longitude: 150 },
+          MERCURY: { longitude: 90 },
+          MARS: { longitude: 75 },
+          SATURN: { longitude: 210 }
+        };
+        const houseCusps = [30,60,90,120,150,180,210,240,270,300,330,0];
+        const result = calculator.processChart({
+          planetPositions,
+          houseCusps,
+          birthDetails: {
+            birthDate: \`\${birthDate}T\${birthTime}\`,
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude)
+          }
+        });
+        setOutput(result);
+      };
+
+      return (
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6 text-center">Astrology Chart with Dhana Yoga</h1>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm">Birth Date:</label>
+              <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="w-full p-2 bg-gray-800 text-white rounded"/>
+            </div>
+            <div>
+              <label className="block text-sm">Birth Time:</label>
+              <input type="time" value={birthTime} onChange={e => setBirthTime(e.target.value)} className="w-full p-2 bg-gray-800 text-white rounded"/>
+            </div>
+            <div>
+              <label className="block text-sm">Latitude:</label>
+              <input type="number" step="0.0001" value={latitude} onChange={e => setLatitude(e.target.value)} className="w-full p-2 bg-gray-800 text-white rounded"/>
+            </div>
+            <div>
+              <label className="block text-sm">Longitude:</label>
+              <input type="number" step="0.0001" value={longitude} onChange={e => setLongitude(e.target.value)} className="w-full p-2 bg-gray-800 text-white rounded"/>
+            </div>
+          </div>
+          <button onClick={handleCalculate} className="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-white font-semibold">Generate Chart</button>
+
+          {output && (
+            <div className="mt-6 space-y-4">
+              <h2 className="text-2xl font-semibold">Results</h2>
+              <pre className="bg-gray-800 p-4 rounded overflow-auto text-sm">{JSON.stringify(output, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

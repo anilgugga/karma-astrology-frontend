@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indian Chart Renderers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    const IndianChartRenderers = () => {
+      const [chartType, setChartType] = useState('north');
+      const [selectedPlanet, setSelectedPlanet] = useState(null);
+      const [showDegrees, setShowDegrees] = useState(true);
+      const canvasRef = useRef(null);
+
+      // Chart configuration constants
+      const CHART_CONFIG = {
+        canvas: {
+          width: 600,
+          height: 600,
+          centerX: 300,
+          centerY: 300
+        },
+        colors: {
+          background: '#0f172a',
+          border: '#475569',
+          houseBackground: '#1e293b',
+          houseHighlight: '#334155',
+          text: '#f8fafc',
+          planetText: '#000000',
+          highlight: '#fbbf24',
+          planets: {
+            SUN: '#fbbf24',
+            MOON: '#e5e7eb',
+            MERCURY: '#10b981',
+            VENUS: '#f472b6',
+            MARS: '#ef4444',
+            JUPITER: '#3b82f6',
+            SATURN: '#6366f1',
+            RAHU: '#8b5cf6',
+            KETU: '#f59e0b'
+          }
+        },
+        fonts: {
+          house: '16px Arial, sans-serif',
+          planet: '14px Arial, sans-serif',
+          degree: '10px Arial, sans-serif'
+        },
+        north: {
+          size: 400,
+          houseSize: 100
+        },
+        south: {
+          size: 400,
+          cellSize: 80
+        }
+      };
+
+      // Sample chart data (same as core engine)
+      const sampleChartData = {
+        planetPositions: {
+          SUN: { 
+            longitude: 45.5, 
+            zodiacPosition: { sign: { name: 'Taurus', symbol: '♉' }, degreeInSign: 15.5 },
+            house: 1,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          MOON: { 
+            longitude: 120.3, 
+            zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 0.3 },
+            house: 4,
+            dignity: { dignity: 'Own Sign', strength: 100 }
+          },
+          MERCURY: { 
+            longitude: 200.7, 
+            zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 20.7 },
+            house: 7,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          VENUS: { 
+            longitude: 330.2, 
+            zodiacPosition: { sign: { name: 'Pisces', symbol: '♓' }, degreeInSign: 0.2 },
+            house: 11,
+            dignity: { dignity: 'Exaltation', strength: 95 }
+          },
+          MARS: { 
+            longitude: 280.8, 
+            zodiacPosition: { sign: { name: 'Capricorn', symbol: '♑' }, degreeInSign: 10.8 },
+            house: 9,
+            dignity: { dignity: 'Exaltation', strength: 88 }
+          },
+          JUPITER: { 
+            longitude: 95.4, 
+            zodiacPosition: { sign: { name: 'Cancer', symbol: '♋' }, degreeInSign: 5.4 },
+            house: 3,
+            dignity: { dignity: 'Exaltation', strength: 92 }
+          },
+          SATURN: { 
+            longitude: 185.6, 
+            zodiacPosition: { sign: { name: 'Libra', symbol: '♎' }, degreeInSign: 5.6 },
+            house: 6,
+            dignity: { dignity: 'Exaltation', strength: 85 }
+          },
+          RAHU: { 
+            longitude: 75.9, 
+            zodiacPosition: { sign: { name: 'Gemini', symbol: '♊' }, degreeInSign: 15.9 },
+            house: 2,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          },
+          KETU: { 
+            longitude: 255.9, 
+            zodiacPosition: { sign: { name: 'Sagittarius', symbol: '♐' }, degreeInSign: 15.9 },
+            house: 8,
+            dignity: { dignity: 'Neutral', strength: 50 }
+          }
+        },
+        houses: [
+          { house: 1, cusp: 0, sign: { name: 'Aries', symbol: '♈' } },
+          { house: 2, cusp: 30, sign: { name: 'Taurus', symbol: '♉' } },
+          { house: 3, cusp: 60, sign: { name: 'Gemini', symbol: '♊' } },
+          { house: 4, cusp: 90, sign: { name: 'Cancer', symbol: '♋' } },
+          { house: 5, cusp: 120, sign: { name: 'Leo', symbol: '♌' } },
+          { house: 6, cusp: 150, sign: { name: 'Virgo', symbol: '♍' } },
+          { house: 7, cusp: 180, sign: { name: 'Libra', symbol: '♎' } },
+          { house: 8, cusp: 210, sign: { name: 'Scorpio', symbol: '♏' } },
+          { house: 9, cusp: 240, sign: { name: 'Sagittarius', symbol: '♐' } },
+          { house: 10, cusp: 270, sign: { name: 'Capricorn', symbol: '♑' } },
+          { house: 11, cusp: 300, sign: { name: 'Aquarius', symbol: '♒' } },
+          { house: 12, cusp: 330, sign: { name: 'Pisces', symbol: '♓' } }
+        ]
+      };
+
+      // Planet symbols
+      const planetSymbols = {
+        SUN: '☉', MOON: '☽', MERCURY: '☿', VENUS: '♀', MARS: '♂',
+        JUPITER: '♃', SATURN: '♄', RAHU: '☊', KETU: '☋'
+      };
+
+      // Group planets by house
+      const getPlanetsByHouse = () => {
+        const houseGroups = {};
+        Object.entries(sampleChartData.planetPositions).forEach(([planet, data]) => {
+          if (!houseGroups[data.house]) {
+            houseGroups[data.house] = [];
+          }
+          houseGroups[data.house].push({ planet, data });
+        });
+        return houseGroups;
+      };
+
+      // North Indian chart layout positions
+      const getNorthIndianHousePositions = () => {
+        const { centerX, centerY } = CHART_CONFIG.canvas;
+        const { houseSize } = CHART_CONFIG.north;
+        const offset = houseSize / 2;
+
+        return {
+          1: { x: centerX + offset, y: centerY - offset, w: houseSize, h: houseSize },
+          2: { x: centerX + offset, y: centerY - offset * 3, w: houseSize, h: houseSize },
+          3: { x: centerX - offset, y: centerY - offset * 3, w: houseSize, h: houseSize },
+          4: { x: centerX - offset * 3, y: centerY - offset * 3, w: houseSize, h: houseSize },
+          5: { x: centerX - offset * 3, y: centerY - offset, w: houseSize, h: houseSize },
+          6: { x: centerX - offset * 3, y: centerY + offset, w: houseSize, h: houseSize },
+          7: { x: centerX - offset, y: centerY + offset, w: houseSize, h: houseSize },
+          8: { x: centerX - offset, y: centerY + offset * 3, w: houseSize, h: houseSize },
+          9: { x: centerX + offset, y: centerY + offset * 3, w: houseSize, h: houseSize },
+          10: { x: centerX + offset * 3, y: centerY + offset * 3, w: houseSize, h: houseSize },
+          11: { x: centerX + offset * 3, y: centerY + offset, w: houseSize, h: houseSize },
+          12: { x: centerX + offset * 3, y: centerY - offset, w: houseSize, h: houseSize }
+        };
+      };
+
+      // South Indian chart layout positions
+      const getSouthIndianHousePositions = () => {
+        const { centerX, centerY } = CHART_CONFIG.canvas;
+        const { cellSize } = CHART_CONFIG.south;
+        const offset = cellSize;
+
+        return {
+          1: { x: centerX - offset, y: centerY - offset, w: cellSize * 2, h: cellSize * 2 },
+          2: { x: centerX - offset * 2, y: centerY - offset, w: cellSize, h: cellSize },
+          3: { x: centerX - offset * 2, y: centerY, w: cellSize, h: cellSize },
+          4: { x: centerX - offset * 2, y: centerY + offset, w: cellSize, h: cellSize },
+          5: { x: centerX - offset, y: centerY + offset * 2, w: cellSize, h: cellSize },
+          6: { x: centerX, y: centerY + offset * 2, w: cellSize, h: cellSize },
+          7: { x: centerX + offset, y: centerY + offset * 2, w: cellSize, h: cellSize },
+          8: { x: centerX + offset * 2, y: centerY + offset, w: cellSize, h: cellSize },
+          9: { x: centerX + offset * 2, y: centerY, w: cellSize, h: cellSize },
+          10: { x: centerX + offset * 2, y: centerY - offset, w: cellSize, h: cellSize },
+          11: { x: centerX + offset, y: centerY - offset * 2, w: cellSize, h: cellSize },
+          12: { x: centerX, y: centerY - offset * 2, w: cellSize, h: cellSize }
+        };
+      };
+
+      // Render North Indian chart
+      const renderNorthIndianChart = (ctx) => {
+        const positions = getNorthIndianHousePositions();
+        const planetsByHouse = getPlanetsByHouse();
+
+        // Draw house structure
+        Object.entries(positions).forEach(([house, pos]) => {
+          const houseNum = parseInt(house);
+          
+          // House background
+          ctx.fillStyle = CHART_CONFIG.colors.houseBackground;
+          ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
+          
+          // House border
+          ctx.strokeStyle = CHART_CONFIG.colors.border;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
+          
+          // House number
+          ctx.fillStyle = CHART_CONFIG.colors.text;
+          ctx.font = '12px Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(house, pos.x + 5, pos.y + 5);
+          
+          // Zodiac sign
+          const houseData = sampleChartData.houses[houseNum - 1];
+          ctx.font = '14px Arial, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(houseData.sign.symbol, pos.x + pos.w - 5, pos.y + 5);
+          
+          // Draw planets in this house
+          if (planetsByHouse[houseNum]) {
+            planetsByHouse[houseNum].forEach((planetInfo, index) => {
+              const { planet, data } = planetInfo;
+              const planetY = pos.y + 35 + (index * 25);
+              
+              // Planet background circle
+              ctx.fillStyle = CHART_CONFIG.colors.planets[planet];
+              ctx.beginPath();
+              ctx.arc(pos.x + 25, planetY, 10, 0, 2 * Math.PI);
+              ctx.fill();
+              
+              // Planet symbol
+              ctx.fillStyle = CHART_CONFIG.colors.planetText;
+              ctx.font = CHART_CONFIG.fonts.planet;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(planetSymbols[planet], pos.x + 25, planetY);
+              
+              // Planet degree (if enabled)
+              if (showDegrees) {
+                ctx.fillStyle = CHART_CONFIG.colors.text;
+                ctx.font = CHART_CONFIG.fonts.degree;
+                ctx.textAlign = 'left';
+                const degree = Math.floor(data.zodiacPosition.degreeInSign);
+                ctx.fillText(`${degree}°`, pos.x + 38, planetY);
+              }
+              
+              // Highlight selected planet
+              if (selectedPlanet === planet) {
+                ctx.strokeStyle = CHART_CONFIG.colors.highlight;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(pos.x + 25, planetY, 13, 0, 2 * Math.PI);
+                ctx.stroke();
+              }
+            });
+          }
+        });
+      };
+
+      // Render South Indian chart
+      const renderSouthIndianChart = (ctx) => {
+        const positions = getSouthIndianHousePositions();
+        const planetsByHouse = getPlanetsByHouse();
+
+        // Draw house structure
+        Object.entries(positions).forEach(([house, pos]) => {
+          const houseNum = parseInt(house);
+          
+          // House background
+          ctx.fillStyle = CHART_CONFIG.colors.houseBackground;
+          ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
+          
+          // House border
+          ctx.strokeStyle = CHART_CONFIG.colors.border;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
+          
+          // House number and zodiac sign
+          const houseData = sampleChartData.houses[houseNum - 1];
+          ctx.fillStyle = CHART_CONFIG.colors.text;
+          ctx.font = '11px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(`${house} ${houseData.sign.symbol}`, pos.x + pos.w/2, pos.y + 5);
+          
+          // Draw planets in this house
+          if (planetsByHouse[houseNum]) {
+            const planetsInHouse = planetsByHouse[houseNum];
+            planetsInHouse.forEach((planetInfo, index) => {
+              const { planet, data } = planetInfo;
+              const cols = Math.ceil(Math.sqrt(planetsInHouse.length));
+              const row = Math.floor(index / cols);
+              const col = index % cols;
+              
+              const planetX = pos.x + 10 + (col * 25);
+              const planetY = pos.y + 25 + (row * 25);
+              
+              // Planet background circle
+              ctx.fillStyle = CHART_CONFIG.colors.planets[planet];
+              ctx.beginPath();
+              ctx.arc(planetX, planetY, 8, 0, 2 * Math.PI);
+              ctx.fill();
+              
+              // Planet symbol
+              ctx.fillStyle = CHART_CONFIG.colors.planetText;
+              ctx.font = '12px Arial, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(planetSymbols[planet], planetX, planetY);
+              
+              // Planet degree (if enabled)
+              if (showDegrees) {
+                ctx.fillStyle = CHART_CONFIG.colors.text;
+                ctx.font = '8px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                const degree = Math.floor(data.zodiacPosition.degreeInSign);
+                ctx.fillText(`${degree}°`, planetX, planetY + 15);
+              }
+              
+              // Highlight selected planet
+              if (selectedPlanet === planet) {
+                ctx.strokeStyle = CHART_CONFIG.colors.highlight;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(planetX, planetY, 11, 0, 2 * Math.PI);
+                ctx.stroke();
+              }
+            });
+          }
+        });
+      };
+
+      // Main rendering function
+      const renderChart = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.fillStyle = CHART_CONFIG.colors.background;
+        ctx.fillRect(0, 0, CHART_CONFIG.canvas.width, CHART_CONFIG.canvas.height);
+
+        if (chartType === 'north') {
+          renderNorthIndianChart(ctx);
+        } else {
+          renderSouthIndianChart(ctx);
+        }
+      };
+
+      // Handle canvas clicks
+      const handleCanvasClick = (event) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        const positions = chartType === 'north' ? getNorthIndianHousePositions() : getSouthIndianHousePositions();
+        const planetsByHouse = getPlanetsByHouse();
+
+        // Check if click is on a planet
+        Object.entries(positions).forEach(([house, pos]) => {
+          const houseNum = parseInt(house);
+          if (planetsByHouse[houseNum]) {
+            planetsByHouse[houseNum].forEach((planetInfo, index) => {
+              const { planet } = planetInfo;
+              let planetX, planetY;
+              
+              if (chartType === 'north') {
+                planetX = pos.x + 25;
+                planetY = pos.y + 35 + (index * 25);
+              } else {
+                const cols = Math.ceil(Math.sqrt(planetsByHouse[houseNum].length));
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                planetX = pos.x + 10 + (col * 25);
+                planetY = pos.y + 25 + (row * 25);
+              }
+              
+              const distance = Math.sqrt((clickX - planetX) ** 2 + (clickY - planetY) ** 2);
+              if (distance <= 15) {
+                setSelectedPlanet(selectedPlanet === planet ? null : planet);
+              }
+            });
+          }
+        });
+      };
+
+      useEffect(() => {
+        renderChart();
+      }, [chartType, selectedPlanet, showDegrees]);
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-white p-6">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-center mb-8 text-amber-400">
+              🕉️ Indian Chart Renderers 🕉️
+            </h1>
+            
+            <div className="bg-slate-800 p-6 rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">
+                  {chartType === 'north' ? 'North Indian' : 'South Indian'} Chart
+                </h2>
+                <div className="flex gap-4">
+                  <button
+                    className={`px-4 py-2 rounded text-sm ${
+                      chartType === 'north' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-slate-600 hover:bg-slate-700'
+                    }`}
+                    onClick={() => setChartType('north')}
+                  >
+                    North Indian
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded text-sm ${
+                      chartType === 'south' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-slate-600 hover:bg-slate-700'
+                    }`}
+                    onClick={() => setChartType('south')}
+                  >
+                    South Indian
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded text-sm ${
+                      showDegrees ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 hover:bg-slate-700'
+                    }`}
+                    onClick={() => setShowDegrees(!showDegrees)}
+                  >
+                    {showDegrees ? 'Hide Degrees' : 'Show Degrees'}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <canvas
+                  ref={canvasRef}
+                  width={CHART_CONFIG.canvas.width}
+                  height={CHART_CONFIG.canvas.height}
+                  className="border border-slate-600 rounded-lg cursor-pointer bg-slate-900"
+                  onClick={handleCanvasClick}
+                />
+              </div>
+              
+              {selectedPlanet && (
+                <div className="mt-4 p-4 bg-slate-700 rounded-lg">
+                  <h3 className="font-semibold text-amber-400 mb-2">
+                    {planetSymbols[selectedPlanet]} {selectedPlanet}
+                  </h3>
+                  <p className="text-sm text-gray-300">
+                    Position: {sampleChartData.planetPositions[selectedPlanet].zodiacPosition.sign.name} {Math.floor(sampleChartData.planetPositions[selectedPlanet].zodiacPosition.degreeInSign)}°
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    House: {sampleChartData.planetPositions[selectedPlanet].house}
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Dignity: {sampleChartData.planetPositions[selectedPlanet].dignity.dignity}
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Strength: {sampleChartData.planetPositions[selectedPlanet].dignity.strength}%
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<IndianChartRenderers />, document.getElementById('root'));
+  </script>
+</body>
+</html>
